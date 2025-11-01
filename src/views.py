@@ -1,16 +1,16 @@
+import datetime
 import json
 import logging
 import os
-from src.config import DATA_DIR, LIST_OPERATION
+
+from pandas import DataFrame
+
+from src.config import DATA_DIR, LIST_OPERATION, PARENT_DIR
 from src.utils import get_list_operation
 
 
-# Получаем директорию текущего файла (т.е. папку src)
-
-
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 # Формируем абсолютный путь к папке log (которая находится на уровень выше)
-LOG_DIR = os.path.join(CURRENT_DIR, "..", "logs")
+LOG_DIR = os.path.join(PARENT_DIR,  "logs")
 log_file_path = os.path.join(LOG_DIR, "views.log")
 
 # Настройка логирования
@@ -24,7 +24,7 @@ logger_views.setLevel(logging.DEBUG)
 path_s = os.path.join(DATA_DIR, LIST_OPERATION[0])
 
 
-def events_operations(str_date: str, range_data: str = "M") -> str:
+def events_operations(df : DataFrame, str_date: str, range_data: str = "M") -> str:
     """Реализуйте набор функций и главную функцию, принимающую на вход строку с датой и второй .
     Цифры по тратам и поступлениям округлите до целых.
     @param str_date: необязательный параметр — диапазон данных.
@@ -48,11 +48,25 @@ def events_operations(str_date: str, range_data: str = "M") -> str:
         Курс валют.
         Стоимость акций из S&P 500.
     """
-    # Вызов функции считывание данных из файла
-    data_list = get_list_operation(path_s, LIST_OPERATION[1])
-    print("=" * 20)
-    print(json.dumps(data_list, indent=4, ensure_ascii=False))
+    if df is None:
+        df = pd.DataFrame()
+    elif not isinstance(df, pd.DataFrame):
+        logger_views.error("df должен быть pandas.DataFrame")
+    return
+
+    if str_date is None:
+
+        str_date = datetime.now().strftime("%Y%m%d")
+
+
+
     pass
 
 
-events_operations("", "M")
+############
+# Вызов функции считывание данных из файла
+data_list = get_list_operation(path_s, LIST_OPERATION[1])
+print("=" * 20)
+print(json.dumps(data_list, indent=4, ensure_ascii=False))
+
+events_operations(data_list, "20.05.2020", "M")

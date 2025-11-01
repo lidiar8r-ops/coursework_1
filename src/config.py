@@ -15,7 +15,7 @@ import os
 # # ENABLE_CACHING = False
 
 # Пути к файлам
-current_dir = os.path.dirname(os.path.abspath(__file__))
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 PARENT_DIR = os.path.abspath(os.path.join(current_dir, ".."))
 LOG_DIR = os.path.join(PARENT_DIR, "logs")
 DATA_DIR = os.path.join(PARENT_DIR, "data")
