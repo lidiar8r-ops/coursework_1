@@ -94,7 +94,7 @@ def get_date(date_str: str) -> str:
     return formatted_datetime.strftime("%d.%m.%Y")
 
 
-def filter_by_date(df: pd.DataFrame, str_date: str, range_data: str = "M") -> List[Dict]:
+def filter_by_date(df: pd.DataFrame, str_date: str, range_data: str = "M") -> DataFrame:
     """
     Фильтрует данные по периоду и возвращает список словарей.
 
@@ -107,7 +107,7 @@ def filter_by_date(df: pd.DataFrame, str_date: str, range_data: str = "M") -> Li
         "ALL" — все данные до указанной даты.
     :return: список словарей (записи DataFrame)
     """
-    list_dict: List[Dict] = []
+    # list_dict: List[Dict] = []
 
     # 1. Проверка и нормализация входной даты
     if not str_date or str_date.strip() == "":
@@ -120,7 +120,7 @@ def filter_by_date(df: pd.DataFrame, str_date: str, range_data: str = "M") -> Li
         today_date = today_dt.date()  # работаем с датой (без времени)
     except ValueError as e:
         logger.error(f"Некорректный формат даты: {str_date}. Ошибка: {e}")
-        return list_dict
+        return df
 
     # 2. Нормализация range_data
     range_data = (range_data or "M").upper()
@@ -158,16 +158,18 @@ def filter_by_date(df: pd.DataFrame, str_date: str, range_data: str = "M") -> Li
         )
     except Exception as e:
         logger.error(f"Ошибка при преобразовании столбца 'Дата платежа': {e}")
+        # return list_dict
         return list_dict
 
     # 6. Фильтрация
     mask = (df["Дата платежа"] >= data_from_ts) & (df["Дата платежа"] < data_to_ts)
     filtered_df = df.loc[mask]
 
-    # 7. Преобразование в список словарей
-    list_dict = filtered_df.to_dict(orient="records")
+    # # 7. Преобразование в список словарей
+    # list_dict = filtered_df.to_dict(orient="records")
 
-    return list_dict
+    return filtered_df
+    # return list_dict
 
 
 def get_exchange_rate(carrency_code: str) -> float:
@@ -178,6 +180,7 @@ def get_exchange_rate(carrency_code: str) -> float:
     :param transaction: название валюты
     :return: сумму в рублях по курсу, тип данных —float.
     """
+    carrency_code = carrency_code.upper()
     try:
         if carrency_code == "RUB":
             return 1
@@ -195,7 +198,8 @@ def get_exchange_rate(carrency_code: str) -> float:
                 return 0
 
     except Exception as e:
-        raise (e)
+        logger.error(f"Ошибка при получении курса валюты: {e}")
+        return 0
 
 
 def filter_by_category(input_list: List[Dict], fields: str = "Категория") -> List[Dict]:
