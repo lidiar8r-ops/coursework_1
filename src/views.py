@@ -69,18 +69,47 @@ def events_operations(df : DataFrame, str_date: str, range_data: str = "M") -> s
     # вычисляем период
     if range_data is None:
         range_data = "M"
+
     if range_data == "W":
+        range_data_from = str_date
+        range_data_to = str_date
     elif range_data = "M":
+        range_data_from = str_date
+        range_data_to = str_date
     elif range_data = "Y"
+        range_data_from = str_date
+        range_data_to = str_date
     else:
-        range_data_from
-        range_data_to
+        range_data_from = str_date
+        range_data_to = str_date
+
+    # фильтруем по периоду и статусу операции <<OK>> в результат result_list
 
     # раздел «Расходы»:
+    #  получаем из списка категории трат
 
+    # вычисляем Сумму трат по каждой категориям
 
+    # сортируем полученный список по убыванию
 
+    # берем только первые 7 категорий, остальные в категорию <<Остальное>>
 
+    # раздел «Поступления»:
+    # из result_list получаем сумму поступлений по категориям и общую
+
+    #######
+    # считываем из user_settings.json данные получаем список с данными list_settings
+
+    # раздел «Курс валют»:
+    # получаем через api данные курса валют (указанных в list_settings) на дату ...
+
+    # раздел «Стоимость акций из S&P 500>>
+    # получаем через api данные акций (указанных в list_settings) на дату ...
+
+    #######
+    # выводим в json файл все полученные данные по разделам
+
+    # вывод в консоль об окончании отработки функции и что получен такой-то файл.json
     return list_dict
 
 
