@@ -1,9 +1,9 @@
 import os
 import re
-
-import pandas as pd
+from datetime import date, datetime, timedelta
 from typing import Dict, List
 
+import pandas as pd
 from pandas import DataFrame
 
 from src import app_logger
@@ -125,58 +125,81 @@ def sort_by_date(input_list: List[Dict], sorting: bool = True) -> List[Dict]:
     return sorted(input_list, key=lambda current_dict: current_dict.get("date", ""), reverse=sorting)
 
 
-def filter_by_date(df: DataFrame, , str_date: str, range_data: str = "M") -> List[Dict]:
+def filter_by_date(df: pd.DataFrame, str_date: str, range_data: str = "M") -> List[Dict]:
     """
-    функция фильтрует данные по периоду и возвращает список словарей
-    :param df: DataFrame
-    :param str_date: дата в строков виде
-    :param range_data:: необязательный параметр — диапазон данных.
-        По умолчанию диапазон равен одному месяцу (с начала месяца, на который выпадает дата, по саму дату)
-        Возможные значения второго необязательного параметра:
-        W - неделя, на которую приходится дата;
-        M - месяц, на который приходится дата;
-        Y - год, на который приходится дата;
-        ALL - все данные до указанной даты.
+    Фильтрует данные по периоду и возвращает список словарей.
+
+    :param df: DataFrame с колонкой "Дата платежа" в формате ДД.ММ.ГГГГ
+    :param str_date: дата в строковом виде (например, "19.05.2025")
+    :param range_data: диапазон данных:
+        "W" — неделя, на которую приходится дата;
+        "M" — месяц, на который приходится дата (по умолчанию);
+        "Y" — год, на который приходится дата;
+        "ALL" — все данные до указанной даты.
+    :return: список словарей (записи DataFrame)
     """
-    if str_date is None:
-        logger.info("не указана дата, берем текущую")
-        str_date = now().strftime("%d.%m.%Y")  # Текущая дата
+    list_dict: List[Dict] = []
 
-    today = datetime.strptime(str_date, "%d.%m.%Y")
+    # 1. Проверка и нормализация входной даты
+    if not str_date or str_date.strip() == "":
+        logger.info("Дата не указана, берём текущую")
+        str_date = datetime.now().strftime("%d.%m.%Y")
 
-    range_data = range_data.upper()
-    # вычисляем период
-    if range_data is None:
-        range_data = "M"
+    try:
+        # Преобразуем строку в объект datetime
+        today_dt = datetime.strptime(str_date, "%d.%m.%Y")
+        today_date = today_dt.date()  # работаем с датой (без времени)
+    except ValueError as e:
+        logger.error(f"Некорректный формат даты: {str_date}. Ошибка: {e}")
+        return list_dict
 
+    # 2. Нормализация range_data
+    range_data = (range_data or "M").upper()
+
+    # 3. Вычисление границ периода
     if range_data == "W":
-        data_from = today - timedelta(days=today.weekday())
-        data_to = today + timedelta(days=1)
+        # Начало недели (понедельник)
+        start_of_week = today_date - timedelta(days=today_date.weekday())
+        data_from = start_of_week
+        data_to = today_date + timedelta(days=1)
 
     elif range_data == "M":
-        data_from = date(today.year, today.month, 1)
-        data_to = today + timedelta(days=1)
+        # Начало месяца
+        data_from = date(today_date.year, today_date.month, 1)
+        data_to = today_date + timedelta(days=1)
 
     elif range_data == "Y":
-        data_from = date(today.year, 1, 1)
-        data_to = today + timedelta(days=1)
+        # Начало года
+        data_from = date(today_date.year, 1, 1)
+        data_to = today_date + timedelta(days=1)
 
-    else:  # ALL
-        data_from = datetime.strptime("01.01.1800", "%d.%m.%Y")
-        data_to = today + timedelta(days=1)
 
-    # фильтруем по периоду в результат result_list
-    print(data_from, data_to)
-    data_from = pd.Timestamp(data_from)
-    data_to = pd.Timestamp(data_to)
-    print(data_from, data_to)
+    else:  # "ALL"
+        # Берём очень раннюю дату как нижнюю границу
+        data_from = date(1800, 1, 1)
+        data_to = today_date + timedelta(days=1)
 
-    # преобразует столбец "Дата платежа" в datetime с временем
-    df["Дата платежа"] = pd.to_datetime(df["Дата платежа"], format="%d.%m.%Y", errors="coerce")
+    # 4. Преобразование границ в pd.Timestamp для сравнения с datetime64[ns]
+    data_from_ts = pd.Timestamp(data_from)
+    data_to_ts = pd.Timestamp(data_to)
 
-    df = df.loc[(data_from <= df["Дата платежа"] ) & (df["Дата платежа"] < data_to)]
+    # 5. Преобразование столбца "Дата платежа" в datetime
+    try:
+        df["Дата платежа"] = pd.to_datetime(
+            df["Дата платежа"],
+            format="%d.%m.%Y",
+            errors="coerce"  # некорректные значения → NaT
+        )
+    except Exception as e:
+        logger.error(f"Ошибка при преобразовании столбца 'Дата платежа': {e}")
+        return list_dict
 
-    list_dict = df.to_dict(orient="records")
+    # 6. Фильтрация
+    mask = (df["Дата платежа"] >= data_from_ts) & (df["Дата платежа"] < data_to_ts)
+    filtered_df = df.loc[mask]
+
+    # 7. Преобразование в список словарей
+    list_dict = filtered_df.to_dict(orient="records")
 
     return list_dict
 

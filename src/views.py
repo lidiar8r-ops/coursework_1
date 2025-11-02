@@ -46,7 +46,7 @@ def events_operations(df: DataFrame, str_date: str, range_data: str = "M") -> st
         logger.error("df должен быть pandas.DataFrame")
 
     # # Обработка полученных данных
-    result_list = filter_by_date(str_date: str, range_data
+    result_list = filter_by_date(df, str_date, range_data)
 
     # раздел «Расходы»:
     #  получаем из списка категории трат
@@ -74,4 +74,4 @@ def events_operations(df: DataFrame, str_date: str, range_data: str = "M") -> st
 
     # вывод в консоль об окончании отработки функции и что получен такой-то файл.json
     logger.info("Завершение работы функции")
-    return list_dict
+    return result_list
