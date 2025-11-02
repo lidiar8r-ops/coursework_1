@@ -27,9 +27,9 @@ if __name__ == '__main__':
         # print(json.dumps(df.to_dict(), indent=4, ensure_ascii=False))
         # Вызов функции события events_operations
         logger.info("вызов функции events_operations для формирования раздела События")
-        result = events_operations(df, "19.05.2025", "all")
+        result = events_operations(df, "19.05.2020", "W")
         print("=" * 20)
-        # print(result)
+        print(result)
 
         # Вызов функции события get_profitable_cashback
         logger.info("вызов функции get_profitable_cashback для формирования раздела События")
