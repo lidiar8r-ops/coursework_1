@@ -33,6 +33,7 @@ LIST_OPERATION = [
     ],
     "Валюта платежа",
     "Сумма платежа",
+    "Категория",
 ]
 
 URL_EXCHANGE = "https://api.apilayer.com/exchangerates_data/convert"

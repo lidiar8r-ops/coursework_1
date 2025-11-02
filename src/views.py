@@ -5,7 +5,7 @@ from pandas import DataFrame
 from pandas.io.xml import get_data_from_filepath
 
 from src import app_logger
-from src.utils import conversion_to_single_currency, get_exchange_rate, get_data_from_expensess
+from src.utils import conversion_to_single_currency, get_data_from_expensess, get_exchange_rate
 
 logger = app_logger.get_logger("views.log")
 
@@ -47,14 +47,13 @@ def events_operations(df: DataFrame, str_date: str, range_data: str = "M") -> st
 
     # # Обработка полученных данных
     # фильтрация данных по периоду
-    result_df= conversion_to_single_currency(df, "RUB")
+    result_df = conversion_to_single_currency(df, "RUB")
     if result_df is None:
-        logger.error('Не удачная попытка конвертации суммы платежа в RUB')
+        logger.error("Не удачная попытка конвертации суммы платежа в RUB")
         return None
 
     # формирование раздела «Расходы»:
-    result_list = get_data_from_expensess()
-
+    result_list = get_data_from_expensess(df)
 
     # раздел «Поступления»:
     # из result_list получаем сумму поступлений по категориям и общую

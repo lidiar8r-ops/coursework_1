@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 from pandas import DataFrame
 
 from src import app_logger
-from src.config import URL_EXCHANGE, LIST_OPERATION
+from src.config import LIST_OPERATION, URL_EXCHANGE
 
 # Настройка логирования
 logger = app_logger.get_logger("utils.log")
@@ -133,7 +133,7 @@ def filter_by_date(df: pd.DataFrame, str_date: str, range_data: str = "M") -> Da
         data_from = date(1800, 1, 1)
         data_to = today_date + timedelta(days=1)
 
-    # 4. Преобразование границ в pd.Timestamp для сравнения с datetime64[ns]
+    # 4. Преобразование границ  с и по в pd.Timestamp для сравнения с datetime
     data_from_ts = pd.Timestamp(data_from)
     data_to_ts = pd.Timestamp(data_to)
 
@@ -240,72 +240,84 @@ def conversion_to_single_currency(df: pd.DataFrame, target_currency: str = "RUB"
     return df
 
 
-def get_data_from_expensess(df: DataFrame) -> List[Dict]:
+def get_data_from_expensess(df: pd.DataFrame) -> List[Dict]:
     """
-    формирование раздела «Расходы»:
-    :param df: DataFrame
+    Формирование раздела «Расходы»: суммирует отрицательные значения в колонке суммы (в RUB).
+
+    :param df: DataFrame с колонкой суммы в RUB (например, 'Сумма_RUB')
+    :return: список словарей с итоговыми расходами
     """
-    # получаем из списка категории трат   LIST_OPERATION[3]_RUB
+    # Название колонки с суммой в RUB
     new_amount_col = f"{LIST_OPERATION[3]}_RUB"
 
-    sum_amount = sum(df.loc[:, new_amount_col < 0])
-    print(sum_amount)
-    # вычисляем Сумму трат по каждой категориям
+    # Проверка наличия колонки
+    if new_amount_col not in df.columns:
+        logger.error(f"Колонка '{new_amount_col}' не найдена в DataFrame")
+        # raise KeyError(f"Колонка '{new_amount_col}' не найдена в DataFrame")
+        return []
 
-    # сортируем полученный список по убыванию
+    # Убедимся, что колонка — числовая
+    if not pd.api.types.is_numeric_dtype(df[new_amount_col]):
+        try:
+            df[new_amount_col] = pd.to_numeric(df[new_amount_col], errors='coerce')
+        except Exception as e:
+            logger.errorr(f"Не удалось преобразовать колонку '{new_amount_col}' в число: {e}")
+            # raise ValueError(f"Не удалось преобразовать колонку '{new_amount_col}' в число: {e}")
+            return []
+
+    # Фильтруем отрицательные значения (расходы) и суммируем
+    expenses = df.loc[df[new_amount_col] < 0, new_amount_col]
+    sum_amount = expenses.sum()
+
+    # вычисляем Сумму трат по каждой категориям, т.е. получаем уникальные категории
+    unique_categories = df[LIST_OPERATION[4]].dropna().unique()
+
+    result_list = []
+    for category in unique_categories:
+        df_category = df.loc[df[new_amount_col] < 0, new_amount_col]
+        sum_amount_category = df_category.sum()
+        result_list.append({
+            "category": category,
+            "amount": round(sum_amount_category * (-1)),
+        })
 
     # берем только первые 7 категорий, остальные в категорию <<Остальное>>
+    # Сортируем список по убыванию
+    sorted_list = sorted(result_list, key=lambda x: x["amount"], reverse=True)
 
-    return sum_amount
+    if len(sorted_list) >7:
+        # осатвляем первые
+        top_7 = sorted_list[:7]
+
+        # Берём остальные (после 7‑го) и суммируем поле `amount`
+        rest = sorted_list[7:]
+        if rest:
+            total_amount = sum(item["amount"] for item in rest)
+            # Формируем итоговую запись
+            summed_item = {
+                "category": "Остальное",
+                "amount": round(total_amount)  # округляем до целого
+            }
+
+            top_7.append(summed_item)
+
+    else:
+        top_7 = sorted_list
+
+    # Формируем результат как список словарей
+    result = [
+        {
+            "expenses": {
+            "total_amount": round(sum_amount * (-1)),
+            "main": top_7,
+            "количество_операций": len(expenses)
+        }}
+    ]
+
+    return result
 
 
 def get_data_receipt(df: DataFrame) -> List[Dict]:
     # из result_list получаем сумму поступлений по категориям и общую
     pass
 
-
-def filter_by_category(input_list: List[Dict], fields: str = "Категория") -> List[Dict]:
-    """
-    функция фильтрует список словарей по значение ключа и возвращает новый список словарей
-    :param input_list: список словарей
-    :param fields:  опционально значение для ключа fields, по умолчанию 'Категория'
-    :return: list  возвращает список словарей, содержащий только те словари, у которых ключ fields соответствует
-    указанному значению.
-    """
-    field = fields.upper()
-    for current_dict in input_list:
-        if field not in current_dict.keys():
-            logger_processing.error(f"Не найден ключ {fields} для транзакции {current_dict}")
-
-    return [current_dict for current_dict in input_list if current_dict.get(field, {}) == field]
-
-
-def sort_by_date(input_list: List[Dict], sorting: bool = True) -> List[Dict]:
-    """
-    Возвращает список словарей, отсортированный по дате.
-    :param input_list: список словарей, каждый должен содержать ключ "date" со строкой в формате
-    ISO 8601 (YYYY-MM-DDTHH:MM:SSZ)
-    :param sorting: порядок сортировки (True — убывание, False — возрастание)
-    :return: отсортированный по дате список словарей
-    """
-    for current_dict in input_list:
-        if "date" not in current_dict.keys():
-            logger_processing.error(f"Не найден ключ date для транзакции {current_dict}")
-            # raise KeyError("В словаре не удалось найти ключ date")
-
-        if not isinstance(current_dict.get("date"), str):
-            logger_processing.error(f"Ошибка типа данных в транзакции {current_dict}")
-            # raise TypeError("Ошибка типа данных")
-
-        try:
-            if datetime.fromisoformat(current_dict.get("date", "").replace("Z", "+00:00")) is None:
-                logger_processing.error(
-                    f"Не соответствует формату даты {str(current_dict.get('date'))} в транзакции {current_dict}"
-                )
-        except ValueError:
-            logger_processing.error(
-                f"Не соответствует формату даты {str(current_dict.get('date'))} в транзакции {current_dict}"
-            )
-            # raise ValueError("Не соответствует формату даты")
-
-    return sorted(input_list, key=lambda current_dict: current_dict.get("date", ""), reverse=sorting)

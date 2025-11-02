@@ -30,7 +30,7 @@ if __name__ == '__main__':
         try:
             result = events_operations(df, "19.05.2020", "W")
             print("=" * 20)
-            print(result)
+            print(json.dumps(result, indent=4, ensure_ascii=False))
             if result is None:
                 logger.error("Ошибка функции events_operations для раздела События")
         except Exception as e:
