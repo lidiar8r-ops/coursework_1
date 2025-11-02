@@ -4,7 +4,7 @@ import pandas as pd
 from pandas import DataFrame
 
 from src import app_logger
-from src.utils import filter_by_date, get_exchange_rate
+from src.utils import conversion_to_single_currency, get_exchange_rate
 
 logger = app_logger.get_logger("views.log")
 
@@ -46,11 +46,13 @@ def events_operations(df: DataFrame, str_date: str, range_data: str = "M") -> st
 
     # # Обработка полученных данных
     # фильтрация данных по периоду и возвращение списка словарей.
-    result_list = filter_by_date(df, str_date, range_data)
-
+    result_list = conversion_to_single_currency(df)
+    if result_list is None:
+        logger.error('Не удачная попытка конвертации суммы платежа в RUB')
+        return None
     # раздел «Расходы»:
+
     #  получаем из списка категории трат
-    print(get_exchange_rate("USD"))
 
     # вычисляем Сумму трат по каждой категориям
 

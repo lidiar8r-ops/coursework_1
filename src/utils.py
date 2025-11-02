@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 from pandas import DataFrame
 
 from src import app_logger
-from src.config import URL_EXCHANGE
+from src.config import URL_EXCHANGE, LIST_OPERATION
 
 # Настройка логирования
 logger = app_logger.get_logger("utils.log")
@@ -78,28 +78,6 @@ def get_list_operation(
     except Exception as ex:
         logger.error(f"Необработанная ошибка: {ex}")
         return result_df
-
-
-def get_date(date_str: str) -> str:
-    """
-    функция, которая принимает на вход строку с датой и возвращает строку с датой
-    :param date_str: строка с датой в формате "2024-03-11T02:26:18.671407"
-    :rtype: str возвращает строку с датой в формате "ДД.ММ.ГГГГ" ("11.03.2024").
-    """
-    try:
-        formatted_datetime = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
-        # formatted_datetime = datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S.%f")
-    except ValueError:
-        logger_widget.error(f"Не соответствует формату даты {date_str}")
-        # raise ValueError("Не соответствует формату даты")
-        return ""
-    except TypeError:
-        logger_widget.error(f"Не соответствует формату даты {date_str}")
-        # raise TypeError("Не соответствует типу даты")
-        # logger_widget.info("Невозможно декодировать JSON-данные")
-        return ""
-
-    return formatted_datetime.strftime("%d.%m.%Y")
 
 
 def filter_by_date(df: pd.DataFrame, str_date: str, range_data: str = "M") -> DataFrame:
@@ -209,6 +187,58 @@ def get_exchange_rate(carrency_code: str) -> float:
     except Exception as e:
         logger.error(f"Ошибка при получении курса валюты: {e}")
         return 0
+
+
+def conversion_to_single_currency(df: pd.DataFrame, target_currency: str = "RUB") -> pd.DataFrame:
+    """
+    Преобразует суммы платежей в единую валюту (по умолчанию — RUB).
+
+    :param df: DataFrame с транзакциями. Должен содержать столбцы:
+        - LIST_OPERATION[2] — код валюты (например, 'USD', 'EUR')
+        - LIST_OPERATION[3] — сумма платежа (числовой тип)
+    :param target_currency: целевая валюта для конвертации (по умолчанию 'RUB')
+    :return: DataFrame с пересчитанными суммами в целевой валюте
+    """
+    # Проверяем наличие нужных столбцов
+    currency_col = LIST_OPERATION[2]
+    amount_col = LIST_OPERATION[3]
+
+    # Убедимся, что сумма — числовая
+    if not pd.api.types.is_numeric_dtype(df[amount_col]):
+        try:
+            df[amount_col] = pd.to_numeric(df[amount_col], errors='coerce')
+        except Exception as e:
+            logger.error(f"Не удалось преобразовать столбец '{amount_col}' в число: {e}")
+            return None
+
+    # Создаём новый столбец для сумм  (dropna() исключает строки без указанной валюты)
+    new_amount_col = f"{amount_col}_{target_currency}"
+    df[new_amount_col] = df[amount_col].copy()
+
+    # Получаем уникальные валюты в данных
+    unique_currencies = df[currency_col].dropna().unique()
+
+    for currency in unique_currencies:
+        if currency == target_currency:
+            # Если валюта уже в RUB — ничего не делаем
+            continue
+
+        try:
+            # Получаем курс конвертации (get_exchange_rate возвращает число)
+            rate = get_exchange_rate(currency, target_currency)
+            if pd.isna(rate) or rate <= 0:
+                logger.error(f"Недопустимый курс для валюты {currency}: {rate}")
+
+            # Конвертируем суммы для данной валюты
+            mask = df[currency_col] == currency
+            df.loc[mask, new_amount_col] = df.loc[mask, amount_col] * rate
+
+        except Exception as e:
+            logger.error(f"Ошибка при конвертации валюты {currency}: {e}")
+            # Оставляем исходные значения для проблемных строк
+            continue
+
+    return df
 
 
 def filter_by_category(input_list: List[Dict], fields: str = "Категория") -> List[Dict]:

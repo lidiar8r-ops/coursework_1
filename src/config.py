@@ -31,9 +31,12 @@ LIST_OPERATION = [
         "Округление на инвесткопилку",
         "Сумма операции с округлением",
     ],
+    "Валюта платежа",
+    "Сумма платежа",
 ]
 
 URL_EXCHANGE = "https://api.apilayer.com/exchangerates_data/convert"
+
 #
 # DATABASE_URL = "sqlite:///app.db"
 # MAX_CONNECTIONS = 10
