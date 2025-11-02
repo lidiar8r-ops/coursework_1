@@ -19,7 +19,6 @@ if __name__ == '__main__':
     logger.info("вызов функции считывание данных из файла get_list_operation")
     df = get_list_operation(path_s, LIST_OPERATION[1])
     if df is None or len(df) == 0:
-        # logger.error("Нет данных, более подробно в utils.log")
         logger.error("Нет данных для дальнейшей обработки")
     elif not isinstance(df, pd.DataFrame):
         logger.error("df должен быть pandas.DataFrame")

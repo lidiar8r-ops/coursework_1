@@ -11,7 +11,7 @@ from src import app_logger
 # Настройка логирования
 logger = app_logger.get_logger("utils.log")
 
-def get_list_operation(path_filename: str, list_operation: list) -> DataFrame:
+def get_list_operation(path_filename: str, list_operation: list, filter_str: str = 'Статус') -> DataFrame:
     """
     Функция читает файл CSV или Excel, преобразовывая содержимое в словарь и сформировать список словарей
     :param path_filename: путь к файлу CSV или XLX, XLSX
@@ -47,10 +47,11 @@ def get_list_operation(path_filename: str, list_operation: list) -> DataFrame:
             return result_df
 
         # Если файл только с заголовками, а данных нет
-        if len(dict_df_get) == 0:
+        if len(result_df) == 0:
             logger.error(f"Нет информации в файле {path_filename} ")
             return result_df
 
+        result_df = result_df.loc[:, result_df[filter_str] == "OK"]
         logger.info("Получение DataFrame")
         return result_df
 
