@@ -17,6 +17,7 @@ openpyxl = "^3.1.5"
 pytest-cov = "^7.0.0"
 pytest = "^8.4.2"
 coverage = "^7.11.0"
+flake8 = "^7.3.0"
 
 [tool.poetry.group.lint.dependencies]
 flake8 = "^7.3.0"
