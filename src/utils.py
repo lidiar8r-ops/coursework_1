@@ -11,7 +11,10 @@ from src import app_logger
 # Настройка логирования
 logger = app_logger.get_logger("utils.log")
 
-def get_list_operation(path_filename: str, list_operation: list, filter_str: str = 'Статус') -> DataFrame:
+
+def get_list_operation(
+    path_filename: str, list_operation: list, filter_str: str = "OK", name_field: str = "Статус"
+) -> DataFrame:
     """
     Функция читает файл CSV или Excel, преобразовывая содержимое в словарь и сформировать список словарей
     :param path_filename: путь к файлу CSV или XLX, XLSX
@@ -51,7 +54,7 @@ def get_list_operation(path_filename: str, list_operation: list, filter_str: str
             logger.error(f"Нет информации в файле {path_filename} ")
             return result_df
 
-        result_df = result_df.loc[result_df[filter_str] == "OK"]
+        result_df = result_df.loc[result_df[name_field] == filter_str]
         logger.info("Получение DataFrame")
         return result_df
 
@@ -117,7 +120,6 @@ def sort_by_date(input_list: List[Dict], sorting: bool = True) -> List[Dict]:
     return sorted(input_list, key=lambda current_dict: current_dict.get("date", ""), reverse=sorting)
 
 
-
 def filter_list(input_list: List[Dict], fields: str = "Категория") -> List[Dict]:
     """
     функция фильтрует список словарей по значение ключа и возвращает новый список словарей
@@ -131,10 +133,7 @@ def filter_list(input_list: List[Dict], fields: str = "Категория") -> L
         if field not in current_dict.keys():
             logger_processing.error(f"Не найден ключ {fields} для транзакции {current_dict}")
 
-
     return [current_dict for current_dict in input_list if current_dict.get(field, {}) == field]
-
-
 
 
 def get_currency_exchange(transaction: dict) -> float:
@@ -145,96 +144,96 @@ def get_currency_exchange(transaction: dict) -> float:
     :param transaction: транзакция
     :return: сумма транзакции
     """
-#{
-#   "expenses": {
-#     "total_amount": 32101,
-#     "main": [
-#       {
-#         "category": "Супермаркеты",
-#         "amount": 17319
-#       },
-#       {
-#         "category": "Фастфуд",
-#         "amount": 3324
-#   },
-#       {
-#         "category": "Топливо",
-#         "amount": 2289
-#       },
-#       {
-#         "category": "Развлечения",
-#         "amount": 1850
-#       },
-#       {
-#         "category": "Медицина",
-#         "amount": 1350
-#       },
-#       {
-#         "category": "Остальное",
-#         "amount": 2954
-#       }
-#     ],
-#     "transfers_and_cash": [
-#       {
-#         "category": "Наличные",
-#         "amount": 500
-#       },
-#       {
-#         "category": "Переводы",
-#         "amount": 200
-#       }
-#     ]
-#   },
-#   "income": {
-#     "total_amount": 54271,
-#     "main": [
-#       {
-#         "category": "Пополнение_BANK007",
-#         "amount": 33000
-#       },
-#       {
-#         "category": "Проценты_на_остаток",
-#         "amount": 1242
-#       },
-#       {
-#         "category": "Кэшбэк",
-#         "amount": 29
-#       }
-#     ]
-#   },
-#   "currency_rates": [
-#     {
-#       "currency": "USD",
-#       "rate": 73.21
-#     },
-#     {
-#       "currency": "EUR",
-#       "rate": 87.08
-#     }
-#   ],
-#   "stock_prices": [
-#     {
-#       "stock": "AAPL",
-#       "price": 150.12
-#     },
-#     {
-#       "stock": "AMZN",
-#       "price": 3173.18
-#     },
-#     {
-#       "stock": "GOOGL",
-#       "price": 2742.39
-#     },
-#     {
-#       "stock": "MSFT",
-#       "price": 296.71
-#     },
-#     {
-#       "stock": "TSLA",
-#       "price": 1007.08
-#     }
-#   ]
-# }
+    # {
+    #   "expenses": {
+    #     "total_amount": 32101,
+    #     "main": [
+    #       {
+    #         "category": "Супермаркеты",
+    #         "amount": 17319
+    #       },
+    #       {
+    #         "category": "Фастфуд",
+    #         "amount": 3324
+    #   },
+    #       {
+    #         "category": "Топливо",
+    #         "amount": 2289
+    #       },
+    #       {
+    #         "category": "Развлечения",
+    #         "amount": 1850
+    #       },
+    #       {
+    #         "category": "Медицина",
+    #         "amount": 1350
+    #       },
+    #       {
+    #         "category": "Остальное",
+    #         "amount": 2954
+    #       }
+    #     ],
+    #     "transfers_and_cash": [
+    #       {
+    #         "category": "Наличные",
+    #         "amount": 500
+    #       },
+    #       {
+    #         "category": "Переводы",
+    #         "amount": 200
+    #       }
+    #     ]
+    #   },
+    #   "income": {
+    #     "total_amount": 54271,
+    #     "main": [
+    #       {
+    #         "category": "Пополнение_BANK007",
+    #         "amount": 33000
+    #       },
+    #       {
+    #         "category": "Проценты_на_остаток",
+    #         "amount": 1242
+    #       },
+    #       {
+    #         "category": "Кэшбэк",
+    #         "amount": 29
+    #       }
+    #     ]
+    #   },
+    #   "currency_rates": [
+    #     {
+    #       "currency": "USD",
+    #       "rate": 73.21
+    #     },
+    #     {
+    #       "currency": "EUR",
+    #       "rate": 87.08
+    #     }
+    #   ],
+    #   "stock_prices": [
+    #     {
+    #       "stock": "AAPL",
+    #       "price": 150.12
+    #     },
+    #     {
+    #       "stock": "AMZN",
+    #       "price": 3173.18
+    #     },
+    #     {
+    #       "stock": "GOOGL",
+    #       "price": 2742.39
+    #     },
+    #     {
+    #       "stock": "MSFT",
+    #       "price": 296.71
+    #     },
+    #     {
+    #       "stock": "TSLA",
+    #       "price": 1007.08
+    #     }
+    #   ]
+    # }
     try:
         carrency_code = transaction.get("operationAmount", {}).get("currency", {}).get("code", "")
         if carrency_code == "RUB":
@@ -257,4 +256,3 @@ def get_currency_exchange(transaction: dict) -> float:
                 return 0
     except Exception as e:
         raise (e)
-

@@ -2,17 +2,6 @@
 import os
 
 # from typing import Union
-#
-# DATABASE_URL = "sqlite:///app.db"
-# MAX_CONNECTIONS = 10
-#
-# # Логирование
-# LOG_LEVEL = "DEBUG"
-# # LOG_FILE = "app.log"
-#
-# # # Функциональные флаги
-# # DEBUG = True
-# # ENABLE_CACHING = False
 
 # Пути к файлам
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -24,7 +13,7 @@ DATA_DIR = os.path.join(PARENT_DIR, "data")
 # определим список с именем обрабатываемого файла (operations.xlsx) и его поля
 LIST_OPERATION = [
     # "operations.csv",
-    "operations_short.xlsx",
+    "operations.xlsx",
     [
         "Дата операции",
         "Дата платежа",
@@ -43,3 +32,16 @@ LIST_OPERATION = [
         "Сумма операции с округлением",
     ],
 ]
+
+
+#
+# DATABASE_URL = "sqlite:///app.db"
+# MAX_CONNECTIONS = 10
+#
+# # Логирование
+# LOG_LEVEL = "DEBUG"
+# # LOG_FILE = "app.log"
+#
+# # # Функциональные флаги
+# # DEBUG = True
+# # ENABLE_CACHING = False

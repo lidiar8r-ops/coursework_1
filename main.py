@@ -1,3 +1,4 @@
+import json
 import os
 
 import pandas as pd
@@ -17,12 +18,14 @@ if __name__ == '__main__':
 
     # Вызов функции считывание данных из файла
     logger.info("вызов функции считывание данных из файла get_list_operation")
-    df = get_list_operation(path_s, LIST_OPERATION[1])
+    df = get_list_operation(path_s, LIST_OPERATION[1], "FAILED")
     if df is None or len(df) == 0:
         logger.error("Нет данных для дальнейшей обработки")
     elif not isinstance(df, pd.DataFrame):
         logger.error("df должен быть pandas.DataFrame")
     else:
+        print(json.dumps(df.to_dict(), indent=4, ensure_ascii=False))
+
         # Вызов функции события events_operations
         logger.info("вызов функции events_operations для формирования раздела События")
         result = events_operations(df, "20.05.2020", "M")

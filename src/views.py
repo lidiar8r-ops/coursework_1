@@ -11,7 +11,7 @@ from src import app_logger
 logger = app_logger.get_logger("views.log")
 
 
-def events_operations(df : DataFrame, str_date: str, range_data: str = "M") -> str:
+def events_operations(df: DataFrame, str_date: str, range_data: str = "M") -> str:
     """Реализуйте набор функций и главную функцию, принимающую на вход строку с датой и второй .
     Цифры по тратам и поступлениям округлите до целых.
     @param str_date: необязательный параметр — диапазон данных.
@@ -97,6 +97,3 @@ def events_operations(df : DataFrame, str_date: str, range_data: str = "M") -> s
     # вывод в консоль об окончании отработки функции и что получен такой-то файл.json
     logger.info("Завершение работы функции")
     return list_dict
-
-
-
