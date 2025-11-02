@@ -51,7 +51,7 @@ def get_list_operation(path_filename: str, list_operation: list, filter_str: str
             logger.error(f"Нет информации в файле {path_filename} ")
             return result_df
 
-        result_df = result_df.loc[:, result_df[filter_str] == "OK"]
+        result_df = result_df.loc[result_df[filter_str] == "OK"]
         logger.info("Получение DataFrame")
         return result_df
 
