@@ -3,13 +3,11 @@ import json
 import os
 
 import pandas as pd
-from pandas import DataFrame, period_range
+from pandas import DataFrame
 
 from src import app_logger
-from src.config import DATA_DIR, LIST_OPERATION, PARENT_DIR
-from src.utils import get_list_operation
 
-path_s = os.path.join(DATA_DIR, LIST_OPERATION[0])
+
 logger = app_logger.get_logger("views.log")
 
 
@@ -38,15 +36,13 @@ def events_operations(df : DataFrame, str_date: str, range_data: str = "M") -> s
         Стоимость акций из S&P 500.
     """
     ###### СТРАНИЦА «СОБЫТИЯ»
-    logger.info("Нет данных в файле")
-    df = get_list_operation(path_s, LIST_OPERATION[1])
+    logger.info("Начало работы функции")
 
     if df is None:
         logger.info("Нет данных в файле")
         return f"Нет данных в файле"
     elif not isinstance(df, pd.DataFrame):
         logger.error("df должен быть pandas.DataFrame")
-
 
     # # Обработка полученных данных
     list_dict = df.to_dict(orient="records")
@@ -99,14 +95,8 @@ def events_operations(df : DataFrame, str_date: str, range_data: str = "M") -> s
     # выводим в json файл все полученные данные по разделам
 
     # вывод в консоль об окончании отработки функции и что получен такой-то файл.json
+    logger.info("Завершение работы функции")
     return list_dict
 
 
 
-
-############
-# Вызов функции считывание данных из файла
-result = events_operations("20.05.2020", "M")
-# print("=" * 20)
-# print(json.dumps(result, indent=4, ensure_ascii=False))
-# print("=" * 20)
