@@ -94,37 +94,6 @@ def get_date(date_str: str) -> str:
     return formatted_datetime.strftime("%d.%m.%Y")
 
 
-def sort_by_date(input_list: List[Dict], sorting: bool = True) -> List[Dict]:
-    """
-    Возвращает список словарей, отсортированный по дате.
-    :param input_list: список словарей, каждый должен содержать ключ "date" со строкой в формате
-    ISO 8601 (YYYY-MM-DDTHH:MM:SSZ)
-    :param sorting: порядок сортировки (True — убывание, False — возрастание)
-    :return: отсортированный по дате список словарей
-    """
-    for current_dict in input_list:
-        if "date" not in current_dict.keys():
-            logger_processing.error(f"Не найден ключ date для транзакции {current_dict}")
-            # raise KeyError("В словаре не удалось найти ключ date")
-
-        if not isinstance(current_dict.get("date"), str):
-            logger_processing.error(f"Ошибка типа данных в транзакции {current_dict}")
-            # raise TypeError("Ошибка типа данных")
-
-        try:
-            if datetime.fromisoformat(current_dict.get("date", "").replace("Z", "+00:00")) is None:
-                logger_processing.error(
-                    f"Не соответствует формату даты {str(current_dict.get('date'))} в транзакции {current_dict}"
-                )
-        except ValueError:
-            logger_processing.error(
-                f"Не соответствует формату даты {str(current_dict.get('date'))} в транзакции {current_dict}"
-            )
-            # raise ValueError("Не соответствует формату даты")
-
-    return sorted(input_list, key=lambda current_dict: current_dict.get("date", ""), reverse=sorting)
-
-
 def filter_by_date(df: pd.DataFrame, str_date: str, range_data: str = "M") -> List[Dict]:
     """
     Фильтрует данные по периоду и возвращает список словарей.
@@ -156,7 +125,7 @@ def filter_by_date(df: pd.DataFrame, str_date: str, range_data: str = "M") -> Li
     # 2. Нормализация range_data
     range_data = (range_data or "M").upper()
 
-    # 3. Вычисление границ периода
+    # 3. Вычисление границы периода
     if range_data == "W":
         # Начало недели (понедельник)
         start_of_week = today_date - timedelta(days=today_date.weekday())
@@ -173,7 +142,6 @@ def filter_by_date(df: pd.DataFrame, str_date: str, range_data: str = "M") -> Li
         data_from = date(today_date.year, 1, 1)
         data_to = today_date + timedelta(days=1)
 
-
     else:  # "ALL"
         # Берём очень раннюю дату как нижнюю границу
         data_from = date(1800, 1, 1)
@@ -186,9 +154,7 @@ def filter_by_date(df: pd.DataFrame, str_date: str, range_data: str = "M") -> Li
     # 5. Преобразование столбца "Дата платежа" в datetime
     try:
         df["Дата платежа"] = pd.to_datetime(
-            df["Дата платежа"],
-            format="%d.%m.%Y",
-            errors="coerce"  # некорректные значения → NaT
+            df["Дата платежа"], format="%d.%m.%Y", errors="coerce"  # некорректные значения → NaT
         )
     except Exception as e:
         logger.error(f"Ошибка при преобразовании столбца 'Дата платежа': {e}")
@@ -202,6 +168,34 @@ def filter_by_date(df: pd.DataFrame, str_date: str, range_data: str = "M") -> Li
     list_dict = filtered_df.to_dict(orient="records")
 
     return list_dict
+
+
+def get_exchange_rate(carrency_code: str) -> float:
+    """
+    Для получения текущего курса валют
+    принимает на вход название валюты, если валюта была не RUB, происходит обращение к внешнему API для получения
+    текущего курса валют в рублях.
+    :param transaction: название валюты
+    :return: сумму в рублях по курсу, тип данных —float.
+    """
+    try:
+        if carrency_code == "RUB":
+            return 1
+        else:
+            params_load = {"amount": 1, "from": carrency_code, "to": "RUB"}
+            response = requests.get(url=url, params=params_load, headers=headers)
+            # print(response)
+            if response.status_code == 200:
+                try:
+                    return float(response.json()["result"])
+                except json.decoder.JSONDecodeError as e:
+                    raise (e)
+            else:
+                print(f" Ошибка статус - код: {str(response.status_code)}")
+                return 0
+
+    except Exception as e:
+        raise (e)
 
 
 def filter_by_category(input_list: List[Dict], fields: str = "Категория") -> List[Dict]:
@@ -220,123 +214,32 @@ def filter_by_category(input_list: List[Dict], fields: str = "Категория
     return [current_dict for current_dict in input_list if current_dict.get(field, {}) == field]
 
 
-def get_currency_exchange(transaction: dict) -> float:
+def sort_by_date(input_list: List[Dict], sorting: bool = True) -> List[Dict]:
     """
-    принимает на вход транзакцию и возвращает сумму транзакции (amount) в рублях, тип данных —float.
-    Если транзакция была в USD или EUR, происходит обращение к внешнему API для получения текущего курса валют и
-    конвертации суммы операции в рубли.
-    :param transaction: транзакция
-    :return: сумма транзакции
+    Возвращает список словарей, отсортированный по дате.
+    :param input_list: список словарей, каждый должен содержать ключ "date" со строкой в формате
+    ISO 8601 (YYYY-MM-DDTHH:MM:SSZ)
+    :param sorting: порядок сортировки (True — убывание, False — возрастание)
+    :return: отсортированный по дате список словарей
     """
-    # {
-    #   "expenses": {
-    #     "total_amount": 32101,
-    #     "main": [
-    #       {
-    #         "category": "Супермаркеты",
-    #         "amount": 17319
-    #       },
-    #       {
-    #         "category": "Фастфуд",
-    #         "amount": 3324
-    #   },
-    #       {
-    #         "category": "Топливо",
-    #         "amount": 2289
-    #       },
-    #       {
-    #         "category": "Развлечения",
-    #         "amount": 1850
-    #       },
-    #       {
-    #         "category": "Медицина",
-    #         "amount": 1350
-    #       },
-    #       {
-    #         "category": "Остальное",
-    #         "amount": 2954
-    #       }
-    #     ],
-    #     "transfers_and_cash": [
-    #       {
-    #         "category": "Наличные",
-    #         "amount": 500
-    #       },
-    #       {
-    #         "category": "Переводы",
-    #         "amount": 200
-    #       }
-    #     ]
-    #   },
-    #   "income": {
-    #     "total_amount": 54271,
-    #     "main": [
-    #       {
-    #         "category": "Пополнение_BANK007",
-    #         "amount": 33000
-    #       },
-    #       {
-    #         "category": "Проценты_на_остаток",
-    #         "amount": 1242
-    #       },
-    #       {
-    #         "category": "Кэшбэк",
-    #         "amount": 29
-    #       }
-    #     ]
-    #   },
-    #   "currency_rates": [
-    #     {
-    #       "currency": "USD",
-    #       "rate": 73.21
-    #     },
-    #     {
-    #       "currency": "EUR",
-    #       "rate": 87.08
-    #     }
-    #   ],
-    #   "stock_prices": [
-    #     {
-    #       "stock": "AAPL",
-    #       "price": 150.12
-    #     },
-    #     {
-    #       "stock": "AMZN",
-    #       "price": 3173.18
-    #     },
-    #     {
-    #       "stock": "GOOGL",
-    #       "price": 2742.39
-    #     },
-    #     {
-    #       "stock": "MSFT",
-    #       "price": 296.71
-    #     },
-    #     {
-    #       "stock": "TSLA",
-    #       "price": 1007.08
-    #     }
-    #   ]
-    # }
-    try:
-        carrency_code = transaction.get("operationAmount", {}).get("currency", {}).get("code", "")
-        if carrency_code == "RUB":
-            return float(transaction.get("operationAmount", {}).get("amount", 0))
-        else:
-            amount_transaction = transaction.get("operationAmount", {}).get("amount", 0)
-            if not amount_transaction == 0:
-                params_load = {"amount": amount_transaction, "from": carrency_code, "to": "RUB"}
-                response = requests.get(url=url, params=params_load, headers=headers)
-                # print(response)
-                if response.status_code == 200:
-                    try:
-                        return float(response.json()["result"])
-                    except json.decoder.JSONDecodeError as e:
-                        raise (e)
-                else:
-                    print(f" Ошибка статус - код: {str(response.status_code)}")
-                    return 0
-            else:
-                return 0
-    except Exception as e:
-        raise (e)
+    for current_dict in input_list:
+        if "date" not in current_dict.keys():
+            logger_processing.error(f"Не найден ключ date для транзакции {current_dict}")
+            # raise KeyError("В словаре не удалось найти ключ date")
+
+        if not isinstance(current_dict.get("date"), str):
+            logger_processing.error(f"Ошибка типа данных в транзакции {current_dict}")
+            # raise TypeError("Ошибка типа данных")
+
+        try:
+            if datetime.fromisoformat(current_dict.get("date", "").replace("Z", "+00:00")) is None:
+                logger_processing.error(
+                    f"Не соответствует формату даты {str(current_dict.get('date'))} в транзакции {current_dict}"
+                )
+        except ValueError:
+            logger_processing.error(
+                f"Не соответствует формату даты {str(current_dict.get('date'))} в транзакции {current_dict}"
+            )
+            # raise ValueError("Не соответствует формату даты")
+
+    return sorted(input_list, key=lambda current_dict: current_dict.get("date", ""), reverse=sorting)

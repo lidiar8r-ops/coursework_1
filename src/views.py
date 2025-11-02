@@ -1,4 +1,3 @@
-
 from datetime import date, datetime, timedelta
 
 import pandas as pd
@@ -46,6 +45,7 @@ def events_operations(df: DataFrame, str_date: str, range_data: str = "M") -> st
         logger.error("df должен быть pandas.DataFrame")
 
     # # Обработка полученных данных
+    # фильтрация данных по периоду и возвращение списка словарей.
     result_list = filter_by_date(df, str_date, range_data)
 
     # раздел «Расходы»:
