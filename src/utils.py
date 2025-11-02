@@ -16,9 +16,12 @@ def get_list_operation(
     path_filename: str, list_operation: list, filter_str: str = "OK", name_field: str = "Статус"
 ) -> DataFrame:
     """
-    Функция читает файл CSV или Excel, преобразовывая содержимое в словарь и сформировать список словарей
+    Функция читает файл CSV или Excel, и передает полученный FataFrame
     :param path_filename: путь к файлу CSV или XLX, XLSX
-    :return: словарь с данными
+    :param list_operation: список обязательных полей
+    :param filter_str: статус операции, по умолчанию "OK"
+    :param name_field: имя колонки, по умолчанию "Статус"
+    :return: DataFrame словарь с данными
     """
     result_df: DataFrame = pd.DataFrame()
     try:
@@ -54,7 +57,9 @@ def get_list_operation(
             logger.error(f"Нет информации в файле {path_filename} ")
             return result_df
 
+        # фильтруем полученный df по столбцу с заданным параметром
         result_df = result_df.loc[result_df[name_field] == filter_str]
+
         logger.info("Получение DataFrame")
         return result_df
 
@@ -120,7 +125,63 @@ def sort_by_date(input_list: List[Dict], sorting: bool = True) -> List[Dict]:
     return sorted(input_list, key=lambda current_dict: current_dict.get("date", ""), reverse=sorting)
 
 
-def filter_list(input_list: List[Dict], fields: str = "Категория") -> List[Dict]:
+def filter_by_date(df: DataFrame, , str_date: str, range_data: str = "M") -> List[Dict]:
+    """
+    функция фильтрует данные по периоду и возвращает список словарей
+    :param df: DataFrame
+    :param str_date: дата в строков виде
+    :param range_data:: необязательный параметр — диапазон данных.
+        По умолчанию диапазон равен одному месяцу (с начала месяца, на который выпадает дата, по саму дату)
+        Возможные значения второго необязательного параметра:
+        W - неделя, на которую приходится дата;
+        M - месяц, на который приходится дата;
+        Y - год, на который приходится дата;
+        ALL - все данные до указанной даты.
+    """
+    if str_date is None:
+        logger.info("не указана дата, берем текущую")
+        str_date = now().strftime("%d.%m.%Y")  # Текущая дата
+
+    today = datetime.strptime(str_date, "%d.%m.%Y")
+
+    range_data = range_data.upper()
+    # вычисляем период
+    if range_data is None:
+        range_data = "M"
+
+    if range_data == "W":
+        data_from = today - timedelta(days=today.weekday())
+        data_to = today + timedelta(days=1)
+
+    elif range_data == "M":
+        data_from = date(today.year, today.month, 1)
+        data_to = today + timedelta(days=1)
+
+    elif range_data == "Y":
+        data_from = date(today.year, 1, 1)
+        data_to = today + timedelta(days=1)
+
+    else:  # ALL
+        data_from = datetime.strptime("01.01.1800", "%d.%m.%Y")
+        data_to = today + timedelta(days=1)
+
+    # фильтруем по периоду в результат result_list
+    print(data_from, data_to)
+    data_from = pd.Timestamp(data_from)
+    data_to = pd.Timestamp(data_to)
+    print(data_from, data_to)
+
+    # преобразует столбец "Дата платежа" в datetime с временем
+    df["Дата платежа"] = pd.to_datetime(df["Дата платежа"], format="%d.%m.%Y", errors="coerce")
+
+    df = df.loc[(data_from <= df["Дата платежа"] ) & (df["Дата платежа"] < data_to)]
+
+    list_dict = df.to_dict(orient="records")
+
+    return list_dict
+
+
+def filter_by_category(input_list: List[Dict], fields: str = "Категория") -> List[Dict]:
     """
     функция фильтрует список словарей по значение ключа и возвращает новый список словарей
     :param input_list: список словарей

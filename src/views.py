@@ -1,12 +1,11 @@
-import datetime
-import json
-import os
+
+from datetime import date, datetime, timedelta
 
 import pandas as pd
 from pandas import DataFrame
 
 from src import app_logger
-
+from src.utils import filter_by_date
 
 logger = app_logger.get_logger("views.log")
 
@@ -14,14 +13,16 @@ logger = app_logger.get_logger("views.log")
 def events_operations(df: DataFrame, str_date: str, range_data: str = "M") -> str:
     """Реализуйте набор функций и главную функцию, принимающую на вход строку с датой и второй .
     Цифры по тратам и поступлениям округлите до целых.
-    @param str_date: необязательный параметр — диапазон данных.
+    @param str_date: дата в строков виде
+    @param range_data: необязательный параметр — диапазон данных.
         По умолчанию диапазон равен одному месяцу (с начала месяца, на который выпадает дата, по саму дату)
         Возможные значения второго необязательного параметра:
         W - неделя, на которую приходится дата;
         M - месяц, на который приходится дата;
         Y - год, на который приходится дата;
         ALL - все данные до указанной даты.
-    @param range_data: JSON-ответ содержит следующие данные:
+    @param range_data:
+    return: JSON-ответ, который содержит следующие данные:
         «Расходы»:
             Общая сумма расходов.
             Раздел «Основные», в котором траты по категориям отсортированы по убыванию. Данные предоставляются по 7
@@ -45,30 +46,7 @@ def events_operations(df: DataFrame, str_date: str, range_data: str = "M") -> st
         logger.error("df должен быть pandas.DataFrame")
 
     # # Обработка полученных данных
-    list_dict = df.to_dict(orient="records")
-
-    if str_date is None:
-        logger.error("не указана ")
-        str_date = datetime.now().strftime("%d-%m-%Y")
-
-    # вычисляем период
-    if range_data is None:
-        range_data = "M"
-
-    if range_data == "W":
-        range_data_from = str_date
-        range_data_to = str_date
-    elif range_data == "M":
-        range_data_from = str_date
-        range_data_to = str_date
-    elif range_data == "Y":
-        range_data_from = str_date
-        range_data_to = str_date
-    else:
-        range_data_from = str_date
-        range_data_to = str_date
-
-    # фильтруем по периоду и статусу операции <<OK>> в результат result_list
+    result_list = filter_by_date(str_date: str, range_data
 
     # раздел «Расходы»:
     #  получаем из списка категории трат
