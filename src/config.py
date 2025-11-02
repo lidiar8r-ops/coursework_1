@@ -23,7 +23,7 @@ DATA_DIR = os.path.join(PARENT_DIR, "data")
 
 # определим список с именем обрабатываемого файла (operations.xlsx) и его поля
 LIST_OPERATION = [
-    "operations_short.xlsx",
+    "operations_shortss.xlsx",
     [
         "Дата операции",
         "Дата платежа",

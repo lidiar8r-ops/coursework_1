@@ -5,8 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="804ed9fb-0a05-4e06-9774-b621da54fbac" name="Changes" comment="update project">
+      <change afterPath="$PROJECT_DIR$/src/app_logger.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/logging_config.ini" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/reports.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/reports.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/services.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/services.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/views.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -64,6 +68,11 @@
     "settings.editor.selected.configurable": "preferences.editor"
   }
 }]]></component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\MSI\PycharmProjects\coursework_1\src" />
+    </key>
+  </component>
   <component name="RunManager">
     <configuration name="views" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="coursework_1" />
@@ -180,7 +189,15 @@
       <option name="project" value="LOCAL" />
       <updated>1762080198883</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="update project">
+      <option name="closed" value="true" />
+      <created>1762080972960</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1762080972960</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
