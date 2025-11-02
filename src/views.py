@@ -3,7 +3,8 @@ import json
 import logging
 import os
 
-from pandas import DataFrame
+import pandas as pd
+from pandas import DataFrame, period_range
 
 from src.config import DATA_DIR, LIST_OPERATION, PARENT_DIR
 from src.utils import get_list_operation
@@ -48,25 +49,46 @@ def events_operations(df : DataFrame, str_date: str, range_data: str = "M") -> s
         Курс валют.
         Стоимость акций из S&P 500.
     """
+    ###### СТРАНИЦА «СОБЫТИЯ»
+    df = get_list_operation(path_s, LIST_OPERATION[1])
+
     if df is None:
-        df = pd.DataFrame()
+        logger_views.info("Нет данных в файле")
+        return f"Нет данных в файле"
     elif not isinstance(df, pd.DataFrame):
         logger_views.error("df должен быть pandas.DataFrame")
-    return
+
+
+    # # Обработка полученных данных
+    list_dict = df.to_dict(orient="records")
 
     if str_date is None:
+        logger_views.error("не указана ")
+        str_date = datetime.now().strftime("%d-%m-%Y")
 
-        str_date = datetime.now().strftime("%Y%m%d")
+    # вычисляем период
+    if range_data is None:
+        range_data = "M"
+    if range_data == "W":
+    elif range_data = "M":
+    elif range_data = "Y"
+    else:
+        range_data_from
+        range_data_to
+
+    # раздел «Расходы»:
 
 
 
-    pass
+
+    return list_dict
+
+
 
 
 ############
 # Вызов функции считывание данных из файла
-data_list = get_list_operation(path_s, LIST_OPERATION[1])
-print("=" * 20)
-print(json.dumps(data_list, indent=4, ensure_ascii=False))
-
-events_operations(data_list, "20.05.2020", "M")
+result = events_operations("20.05.2020", "M")
+# print("=" * 20)
+# print(json.dumps(result, indent=4, ensure_ascii=False))
+# print("=" * 20)
