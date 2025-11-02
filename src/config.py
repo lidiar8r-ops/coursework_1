@@ -33,7 +33,7 @@ LIST_OPERATION = [
     ],
 ]
 
-
+URL_EXCHANGE = "https://api.apilayer.com/exchangerates_data/convert"
 #
 # DATABASE_URL = "sqlite:///app.db"
 # MAX_CONNECTIONS = 10

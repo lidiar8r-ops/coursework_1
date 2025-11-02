@@ -4,7 +4,7 @@ import pandas as pd
 from pandas import DataFrame
 
 from src import app_logger
-from src.utils import filter_by_date
+from src.utils import filter_by_date, get_exchange_rate
 
 logger = app_logger.get_logger("views.log")
 
@@ -50,6 +50,7 @@ def events_operations(df: DataFrame, str_date: str, range_data: str = "M") -> st
 
     # раздел «Расходы»:
     #  получаем из списка категории трат
+    print(get_exchange_rate("USD"))
 
     # вычисляем Сумму трат по каждой категориям
 

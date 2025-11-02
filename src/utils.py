@@ -4,12 +4,20 @@ from datetime import date, datetime, timedelta
 from typing import Dict, List
 
 import pandas as pd
+import requests
+from dotenv import load_dotenv
 from pandas import DataFrame
 
 from src import app_logger
+from src.config import URL_EXCHANGE
 
 # Настройка логирования
 logger = app_logger.get_logger("utils.log")
+
+
+# Загрузка переменных из .env-файла,3
+load_dotenv()
+headers = {"apikey": os.getenv("API_KEY")}
 
 
 def get_list_operation(
@@ -186,13 +194,14 @@ def get_exchange_rate(carrency_code: str) -> float:
             return 1
         else:
             params_load = {"amount": 1, "from": carrency_code, "to": "RUB"}
-            response = requests.get(url=url, params=params_load, headers=headers)
+            response = requests.get(url=URL_EXCHANGE, params=params_load, headers=headers)
             # print(response)
             if response.status_code == 200:
                 try:
                     return float(response.json()["result"])
                 except json.decoder.JSONDecodeError as e:
-                    raise (e)
+                    logger.error(f"Ошибка при получении курса валюты: {e}")
+                    return 0
             else:
                 print(f" Ошибка статус - код: {str(response.status_code)}")
                 return 0
