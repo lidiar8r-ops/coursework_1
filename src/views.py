@@ -2,9 +2,10 @@ from datetime import date, datetime, timedelta
 
 import pandas as pd
 from pandas import DataFrame
+from pandas.io.xml import get_data_from_filepath
 
 from src import app_logger
-from src.utils import conversion_to_single_currency, get_exchange_rate
+from src.utils import conversion_to_single_currency, get_exchange_rate, get_data_from_expensess
 
 logger = app_logger.get_logger("views.log")
 
@@ -45,20 +46,15 @@ def events_operations(df: DataFrame, str_date: str, range_data: str = "M") -> st
         logger.error("df должен быть pandas.DataFrame")
 
     # # Обработка полученных данных
-    # фильтрация данных по периоду и возвращение списка словарей.
-    result_list = conversion_to_single_currency(df)
-    if result_list is None:
+    # фильтрация данных по периоду
+    result_df= conversion_to_single_currency(df, "RUB")
+    if result_df is None:
         logger.error('Не удачная попытка конвертации суммы платежа в RUB')
         return None
-    # раздел «Расходы»:
 
-    #  получаем из списка категории трат
+    # формирование раздела «Расходы»:
+    result_list = get_data_from_expensess()
 
-    # вычисляем Сумму трат по каждой категориям
-
-    # сортируем полученный список по убыванию
-
-    # берем только первые 7 категорий, остальные в категорию <<Остальное>>
 
     # раздел «Поступления»:
     # из result_list получаем сумму поступлений по категориям и общую

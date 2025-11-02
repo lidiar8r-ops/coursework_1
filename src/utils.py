@@ -158,7 +158,7 @@ def filter_by_date(df: pd.DataFrame, str_date: str, range_data: str = "M") -> Da
     # return list_dict
 
 
-def get_exchange_rate(carrency_code: str) -> float:
+def get_exchange_rate(carrency_code: str, target_currency: str = "RUB") -> float:
     """
     Для получения текущего курса валют
     принимает на вход название валюты, если валюта была не RUB, происходит обращение к внешнему API для получения
@@ -168,7 +168,7 @@ def get_exchange_rate(carrency_code: str) -> float:
     """
     carrency_code = carrency_code.upper()
     try:
-        if carrency_code == "RUB":
+        if carrency_code == target_currency:
             return 1
         else:
             params_load = {"amount": 1, "from": carrency_code, "to": "RUB"}
@@ -192,7 +192,6 @@ def get_exchange_rate(carrency_code: str) -> float:
 def conversion_to_single_currency(df: pd.DataFrame, target_currency: str = "RUB") -> pd.DataFrame:
     """
     Преобразует суммы платежей в единую валюту (по умолчанию — RUB).
-
     :param df: DataFrame с транзакциями. Должен содержать столбцы:
         - LIST_OPERATION[2] — код валюты (например, 'USD', 'EUR')
         - LIST_OPERATION[3] — сумма платежа (числовой тип)
@@ -239,6 +238,30 @@ def conversion_to_single_currency(df: pd.DataFrame, target_currency: str = "RUB"
             continue
 
     return df
+
+
+def get_data_from_expensess(df: DataFrame) -> List[Dict]:
+    """
+    формирование раздела «Расходы»:
+    :param df: DataFrame
+    """
+    # получаем из списка категории трат   LIST_OPERATION[3]_RUB
+    new_amount_col = f"{LIST_OPERATION[3]}_RUB"
+
+    sum_amount = sum(df.loc[:, new_amount_col < 0])
+    print(sum_amount)
+    # вычисляем Сумму трат по каждой категориям
+
+    # сортируем полученный список по убыванию
+
+    # берем только первые 7 категорий, остальные в категорию <<Остальное>>
+
+    return sum_amount
+
+
+def get_data_receipt(df: DataFrame) -> List[Dict]:
+    # из result_list получаем сумму поступлений по категориям и общую
+    pass
 
 
 def filter_by_category(input_list: List[Dict], fields: str = "Категория") -> List[Dict]:
