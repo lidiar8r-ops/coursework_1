@@ -310,14 +310,19 @@ def get_data_from_expensess(df: pd.DataFrame) -> List[Dict]:
             "expenses": {
             "total_amount": round(sum_amount * (-1)),
             "main": top_7,
-            "количество_операций": len(expenses)
         }}
     ]
 
     return result
 
 
-def get_data_receipt(df: DataFrame) -> List[Dict]:
+def get_data_receipt(df: DataFrame, list_settings: list) -> List[Dict]:
+    """
+    Функция получает через api данные курса валют (указанных в list_settings) на дату текущую
+    и формирует сумму поступлений по категориям и общую
+    :param df:
+    :param df:
+    """
     # из result_list получаем сумму поступлений по категориям и общую
-    pass
+    return []
 

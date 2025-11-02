@@ -1,11 +1,10 @@
-from datetime import date, datetime, timedelta
-
+import os.path
 import pandas as pd
 from pandas import DataFrame
-from pandas.io.xml import get_data_from_filepath
 
 from src import app_logger
-from src.utils import conversion_to_single_currency, get_data_from_expensess, get_exchange_rate
+from src.config import DATA_DIR
+from src.utils import conversion_to_single_currency, get_data_from_expensess, get_exchange_rate, get_data_receipt
 
 logger = app_logger.get_logger("views.log")
 
@@ -57,15 +56,31 @@ def events_operations(df: DataFrame, str_date: str, range_data: str = "M") -> st
 
     # раздел «Поступления»:
     # из result_list получаем сумму поступлений по категориям и общую
+    result_list.append(get_data_receipt(df))
 
     #######
     # считываем из user_settings.json данные получаем список с данными list_settings
+    file_path = os.path.join(DATA_DIR, "user_settings.json")
 
-    # раздел «Курс валют»:
-    # получаем через api данные курса валют (указанных в list_settings) на дату ...
+    list_settings = ''
+    # Считываем существующие данные (если файл есть)
+    if os.path.exists(file_path):
+        try:
+            with open(file_path, "r") as f:
+                list_settings = json.load(f)
+        except Exception as e:
+            logger.error(f"Ошибка {e}")
+            list_settings = []
+    else:
+        list_settings = []
+        logger.error(f'файл {file_path} не найден')
+
+    if list_settings !=[]:
+        # раздел «Курс валют»0:
+        get_data_receipt = get_data_receipt(df, list_settings)
 
     # раздел «Стоимость акций из S&P 500>>
-    # получаем через api данные акций (указанных в list_settings) на дату ...
+    # получаем через api данные акций (указанных в list_settings) на дату текущую
 
     #######
     # выводим в json файл все полученные данные по разделам
