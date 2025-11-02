@@ -1,8 +1,6 @@
 import datetime
 import json
-import logging
 import os
-from logging.config import fileConfig
 
 import pandas as pd
 from pandas import DataFrame, period_range
