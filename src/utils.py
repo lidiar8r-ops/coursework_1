@@ -9,7 +9,8 @@ from dotenv import load_dotenv
 from pandas import DataFrame
 
 from src import app_logger
-from src.config import LIST_OPERATION, URL_EXCHANGE
+from src.config import LIST_OPERATION, URL_EXCHANGE, URL_EXCHANGE_SP_500, DATA_DIR
+import yfinance as yf
 
 # Настройка логирования
 logger = app_logger.get_logger("utils.log")
@@ -17,7 +18,8 @@ logger = app_logger.get_logger("utils.log")
 
 # Загрузка переменных из .env-файла,3
 load_dotenv()
-headers = {"apikey": os.getenv("API_KEY")}
+headers = {"apikey": os.getenv("API_KEY") }
+headers_sp_500 = {"apikey": os.getenv("API_KEY_SP500"), }
 
 
 def get_list_operation(
@@ -158,12 +160,15 @@ def filter_by_date(df: pd.DataFrame, str_date: str, range_data: str = "M") -> Da
     # return list_dict
 
 
-def get_exchange_rate(carrency_code: str, target_currency: str = "RUB") -> float:
+def get_exchange_rate(carrency_code: str, target_currency: str = "RUB", bool_prices: bool = False) -> float:
     """
     Для получения текущего курса валют
     принимает на вход название валюты, если валюта была не RUB, происходит обращение к внешнему API для получения
     текущего курса валют в рублях.
+    :param carrency_code:
+    :param target_currency:
     :param transaction: название валюты
+    :param bool_prices: для получения цен на акции из S&P500
     :return: сумму в рублях по курсу, тип данных —float.
     """
     carrency_code = carrency_code.upper()
@@ -171,9 +176,18 @@ def get_exchange_rate(carrency_code: str, target_currency: str = "RUB") -> float
         if carrency_code == target_currency:
             return 1
         else:
-            params_load = {"amount": 1, "from": carrency_code, "to": "RUB"}
-            response = requests.get(url=URL_EXCHANGE, params=params_load, headers=headers)
-            # print(response)
+            if bool_prices:  # для получения
+                # price_url = f"https://financialmodelingprep.com/v3/quote-short/AAPL?apikey={api_key_500}"
+                params_load = {
+                    "query": query,
+                    "apikey": api_key
+                }
+                response = requests.get(url=URL_EXCHANGE_SP_500, params=params_load, headers=headers_sp_500)
+
+            else:
+                params_load = {"amount": 1, "from": carrency_code, "to": "RUB"}
+                response = requests.get(url=URL_EXCHANGE, params=params_load, headers=headers)
+                # print(response)
             if response.status_code == 200:
                 try:
                     return float(response.json()["result"])
@@ -205,7 +219,7 @@ def conversion_to_single_currency(df: pd.DataFrame, target_currency: str = "RUB"
     # Убедимся, что сумма — числовая
     if not pd.api.types.is_numeric_dtype(df[amount_col]):
         try:
-            df[amount_col] = pd.to_numeric(df[amount_col], errors='coerce')
+            df[amount_col] = pd.to_numeric(df[amount_col], errors="coerce")
         except Exception as e:
             logger.error(f"Не удалось преобразовать столбец '{amount_col}' в число: {e}")
             return None
@@ -259,7 +273,7 @@ def get_data_from_expensess(df: pd.DataFrame) -> List[Dict]:
     # Убедимся, что колонка — числовая
     if not pd.api.types.is_numeric_dtype(df[new_amount_col]):
         try:
-            df[new_amount_col] = pd.to_numeric(df[new_amount_col], errors='coerce')
+            df[new_amount_col] = pd.to_numeric(df[new_amount_col], errors="coerce")
         except Exception as e:
             logger.errorr(f"Не удалось преобразовать колонку '{new_amount_col}' в число: {e}")
             # raise ValueError(f"Не удалось преобразовать колонку '{new_amount_col}' в число: {e}")
@@ -276,16 +290,18 @@ def get_data_from_expensess(df: pd.DataFrame) -> List[Dict]:
     for category in unique_categories:
         df_category = df.loc[df[new_amount_col] < 0, new_amount_col]
         sum_amount_category = df_category.sum()
-        result_list.append({
-            "category": category,
-            "amount": round(sum_amount_category * (-1)),
-        })
+        result_list.append(
+            {
+                "category": category,
+                "amount": round(sum_amount_category * (-1)),
+            }
+        )
 
     # берем только первые 7 категорий, остальные в категорию <<Остальное>>
     # Сортируем список по убыванию
     sorted_list = sorted(result_list, key=lambda x: x["amount"], reverse=True)
 
-    if len(sorted_list) >7:
+    if len(sorted_list) > 7:
         # осатвляем первые
         top_7 = sorted_list[:7]
 
@@ -294,10 +310,7 @@ def get_data_from_expensess(df: pd.DataFrame) -> List[Dict]:
         if rest:
             total_amount = sum(item["amount"] for item in rest)
             # Формируем итоговую запись
-            summed_item = {
-                "category": "Остальное",
-                "amount": round(total_amount)  # округляем до целого
-            }
+            summed_item = {"category": "Остальное", "amount": round(total_amount)}  # округляем до целого
 
             top_7.append(summed_item)
 
@@ -308,12 +321,50 @@ def get_data_from_expensess(df: pd.DataFrame) -> List[Dict]:
     result = [
         {
             "expenses": {
-            "total_amount": round(sum_amount * (-1)),
-            "main": top_7,
-        }}
+
+
+                "total_amount": round(sum_amount * (-1)),
+                "main": top_7,
+            }
+        }
     ]
 
     return result
+
+
+def get_user_settings() -> List[Dict]:
+    """"""
+    # считываем из user_settings.json данные получаем список с данными list_settings
+    file_path = os.path.join(DATA_DIR, "user_settings.json")
+
+    list_settings = []
+    # Считываем существующие данные (если файл есть)
+    if os.path.exists(file_path):
+        try:
+            with open(file_path, "r") as f:
+                list_settings = json.load(f)
+        except Exception as e:
+            logger.error(f"Ошибка {e}")
+            list_settings = []
+    else:
+        list_settings = []
+        logger.error(f"файл {file_path} не найден")
+
+    # user_settings = []
+    for setting in list_settings:
+        list_settings.append(setting)
+        print(setting)
+        pass
+
+    # try:
+    #     data = yf.download("AMZN", period="1d")
+    #     print(data)
+    # except Exception as e:
+    #     print(f"Ошибка: {e}")
+    # print("=!!" * 20)
+    #
+    # print(data)
+    return list_settings
 
 
 def get_data_receipt(df: DataFrame, list_settings: list) -> List[Dict]:
@@ -323,6 +374,8 @@ def get_data_receipt(df: DataFrame, list_settings: list) -> List[Dict]:
     :param df:
     :param df:
     """
+
+    #
+
     # из result_list получаем сумму поступлений по категориям и общую
     return []
-

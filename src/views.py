@@ -4,7 +4,8 @@ from pandas import DataFrame
 
 from src import app_logger
 from src.config import DATA_DIR
-from src.utils import conversion_to_single_currency, get_data_from_expensess, get_exchange_rate, get_data_receipt
+from src.utils import conversion_to_single_currency, get_data_from_expensess, get_data_receipt, get_exchange_rate, \
+    get_user_settings
 
 logger = app_logger.get_logger("views.log")
 
@@ -56,29 +57,16 @@ def events_operations(df: DataFrame, str_date: str, range_data: str = "M") -> st
 
     # раздел «Поступления»:
     # из result_list получаем сумму поступлений по категориям и общую
-    result_list.append(get_data_receipt(df))
+    result_list.append(get_data_receipt(df, []))
 
     #######
-    # считываем из user_settings.json данные получаем список с данными list_settings
-    file_path = os.path.join(DATA_DIR, "user_settings.json")
+    list_settings  = get_user_settings()
 
-    list_settings = ''
-    # Считываем существующие данные (если файл есть)
-    if os.path.exists(file_path):
-        try:
-            with open(file_path, "r") as f:
-                list_settings = json.load(f)
-        except Exception as e:
-            logger.error(f"Ошибка {e}")
-            list_settings = []
-    else:
-        list_settings = []
-        logger.error(f'файл {file_path} не найден')
-
-    if list_settings !=[]:
-        # раздел «Курс валют»0:
-        get_data_receipt = get_data_receipt(df, list_settings)
-
+    # if list_settings !=[]:
+    #     # раздел «Курс валют»:
+    #     data_receipt = get_data_receipt(df, list_settings)
+    # # data_receipt = get_data_receipt(df, [1,2,3,4]) + " 111111"
+    # print(data_receipt)
     # раздел «Стоимость акций из S&P 500>>
     # получаем через api данные акций (указанных в list_settings) на дату текущую
 
