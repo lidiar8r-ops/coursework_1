@@ -4,8 +4,13 @@ from pandas import DataFrame
 
 from src import app_logger
 from src.config import DATA_DIR
-from src.utils import conversion_to_single_currency, get_data_from_expensess, get_data_receipt, get_exchange_rate, \
-    get_user_settings
+from src.utils import (
+    conversion_to_single_currency,
+    get_data_from_expensess,
+    get_data_receipt,
+    get_exchange_rate,
+    get_user_settings,
+)
 
 logger = app_logger.get_logger("views.log")
 
@@ -60,15 +65,17 @@ def events_operations(df: DataFrame, str_date: str, range_data: str = "M") -> st
     result_list.append(get_data_receipt(df, []))
 
     #######
-    list_settings  = get_user_settings()
+    dict_settings = get_user_settings(os.path.join(DATA_DIR, "user_settings.json"))
 
-    # if list_settings !=[]:
-    #     # раздел «Курс валют»:
-    #     data_receipt = get_data_receipt(df, list_settings)
-    # # data_receipt = get_data_receipt(df, [1,2,3,4]) + " 111111"
-    # print(data_receipt)
-    # раздел «Стоимость акций из S&P 500>>
-    # получаем через api данные акций (указанных в list_settings) на дату текущую
+    if dict_settings == {}:
+        logger.error("Файл с настройками для пользователя пуст или не существует (подробнее в файле utils.log)")
+    else:
+        # раздел «Курс валют»:
+        data_receipt = get_data_receipt(dict_settings)
+
+        print(data_receipt)
+        # раздел «Стоимость акций из S&P 500>>
+        # получаем через api данные акций (указанных в list_settings) на дату текущую
 
     #######
     # выводим в json файл все полученные данные по разделам

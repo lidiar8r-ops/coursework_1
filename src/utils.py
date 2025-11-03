@@ -1,3 +1,4 @@
+import json
 import os
 import re
 from datetime import date, datetime, timedelta
@@ -10,7 +11,8 @@ from pandas import DataFrame
 
 from src import app_logger
 from src.config import LIST_OPERATION, URL_EXCHANGE, URL_EXCHANGE_SP_500, DATA_DIR
-import yfinance as yf
+
+# import yfinance as yf
 
 # Настройка логирования
 logger = app_logger.get_logger("utils.log")
@@ -18,8 +20,10 @@ logger = app_logger.get_logger("utils.log")
 
 # Загрузка переменных из .env-файла,3
 load_dotenv()
-headers = {"apikey": os.getenv("API_KEY") }
-headers_sp_500 = {"apikey": os.getenv("API_KEY_SP500"), }
+headers = {"apikey": os.getenv("API_KEY")}
+# headers_sp_500 = {
+#     "apikey_500": os.getenv("API_KEY_SP500"),
+# }
 
 
 def get_list_operation(
@@ -178,10 +182,7 @@ def get_exchange_rate(carrency_code: str, target_currency: str = "RUB", bool_pri
         else:
             if bool_prices:  # для получения
                 # price_url = f"https://financialmodelingprep.com/v3/quote-short/AAPL?apikey={api_key_500}"
-                params_load = {
-                    "query": query,
-                    "apikey": api_key
-                }
+                params_load = {"query": query, "apikey": api_key}
                 response = requests.get(url=URL_EXCHANGE_SP_500, params=params_load, headers=headers_sp_500)
 
             else:
@@ -284,11 +285,11 @@ def get_data_from_expensess(df: pd.DataFrame) -> List[Dict]:
     sum_amount = expenses.sum()
 
     # вычисляем Сумму трат по каждой категориям, т.е. получаем уникальные категории
-    unique_categories = df[LIST_OPERATION[4]].dropna().unique()
+    unique_categories = df[df[new_amount_col] < 0][LIST_OPERATION[4]].dropna().unique()
 
     result_list = []
     for category in unique_categories:
-        df_category = df.loc[df[new_amount_col] < 0, new_amount_col]
+        df_category = df.loc[(df[new_amount_col] < 0) & (df[LIST_OPERATION[4]] == category), new_amount_col]
         sum_amount_category = df_category.sum()
         result_list.append(
             {
@@ -321,8 +322,6 @@ def get_data_from_expensess(df: pd.DataFrame) -> List[Dict]:
     result = [
         {
             "expenses": {
-
-
                 "total_amount": round(sum_amount * (-1)),
                 "main": top_7,
             }
@@ -332,50 +331,55 @@ def get_data_from_expensess(df: pd.DataFrame) -> List[Dict]:
     return result
 
 
-def get_user_settings() -> List[Dict]:
+def get_user_settings(file_path) -> Dict:
     """"""
-    # считываем из user_settings.json данные получаем список с данными list_settings
-    file_path = os.path.join(DATA_DIR, "user_settings.json")
-
-    list_settings = []
+    # считываем из file_path данные получаем словарь с данными data
     # Считываем существующие данные (если файл есть)
     if os.path.exists(file_path):
         try:
             with open(file_path, "r") as f:
-                list_settings = json.load(f)
+                data = json.load(f)
+
         except Exception as e:
             logger.error(f"Ошибка {e}")
-            list_settings = []
+            return {}
     else:
-        list_settings = []
         logger.error(f"файл {file_path} не найден")
+        return {}
 
-    # user_settings = []
-    for setting in list_settings:
-        list_settings.append(setting)
-        print(setting)
-        pass
-
-    # try:
-    #     data = yf.download("AMZN", period="1d")
-    #     print(data)
-    # except Exception as e:
-    #     print(f"Ошибка: {e}")
-    # print("=!!" * 20)
-    #
-    # print(data)
-    return list_settings
+    return data
 
 
-def get_data_receipt(df: DataFrame, list_settings: list) -> List[Dict]:
+def get_data_receipt(dict_user) -> List[Dict]:
     """
     Функция получает через api данные курса валют (указанных в list_settings) на дату текущую
     и формирует сумму поступлений по категориям и общую
-    :param df:
-    :param df:
+    :param dict_user:
+    :return:  словарь, где "currency_rates" данные о курсе валют,
+                для каждой валюты,указанной в файле настроек пользователя
     """
-
-    #
-
     # из result_list получаем сумму поступлений по категориям и общую
+    for currency in dict_user["user_currencies"]:
+        # = get_exchange_rate(carrency_code: str, target_currency: str = "currency", bool_prices: bool = False)
+        tickers = ["AAPL", "MSFT", "GOOGL", "TSLA"]
+
+        url = f"https://financialmodelingprep.com/api/v3/quote-short/AAPL,MSFT,GOOGL,TSLA?apikey=WPFRbddonJqfUQQfE5aBCPmQfRrSLHad"
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
+        prices = {item["tickers"]: item["price"] for item in data}
+
+        for symbol, price in prices.items():
+            print(f"{symbol}: {price} RUB")
     return []
+
+
+dict_settings = get_user_settings(os.path.join(DATA_DIR, "user_settings.json"))
+
+if dict_settings == {}:
+    logger.error("Файл с настройками для пользователя пуст или не существует (подробнее в файле utils.log)")
+else:
+    # раздел «Курс валют»:
+    data_receipt = get_data_receipt(dict_settings)
+
+    print(data_receipt)
