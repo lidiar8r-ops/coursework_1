@@ -394,7 +394,7 @@ def get_data_from_income(df: pd.DataFrame) -> Dict:
     return result
 
 
-def get_user_settings(file_path) -> Dict:
+def get_user_settings(file_path: str) -> Dict:
     """"""
     # считываем из file_path данные получаем словарь с данными data
     # Считываем существующие данные (если файл есть)
