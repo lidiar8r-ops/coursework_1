@@ -1,3 +1,4 @@
+import json
 import os.path
 import pandas as pd
 from pandas import DataFrame
@@ -8,7 +9,7 @@ from src.utils import (
     conversion_to_single_currency,
     get_data_from_expensess,
     get_user_settings,
-    get_stock_price_sp_500
+    get_stock_price_sp_500, get_data_from_income, filter_by_date, get_currency_rates, write_json
 )
 
 logger = app_logger.get_logger("views.log")
@@ -51,17 +52,20 @@ def events_operations(df: DataFrame, str_date: str, range_data: str = "M") -> di
 
     # # Обработка полученных данных
     # фильтрация данных по периоду
-    result_df = conversion_to_single_currency(df, "RUB")
+    result_df_p = filter_by_date(df, str_date, range_data)
+
+    # получаем сумму платежа в рублях
+    result_df = conversion_to_single_currency(result_df_p, "RUB")
     if result_df is None:
         logger.error("Не удачная попытка конвертации суммы платежа в RUB")
         return None
 
     # формирование раздела «Расходы»:
-    result_dict = get_data_from_expensess(df)
+    result_dict = get_data_from_expensess(result_df)
 
     # раздел «Поступления»:
-    # из result_list получаем сумму поступлений по категориям и общую
-    # result_list.append(get_data_receipt(df, []))
+    # из df получаем сумму поступлений по категориям и общую
+    result_dict["income"] = get_data_from_income(result_df)
 
     #######
     dict_settings = get_user_settings(os.path.join(DATA_DIR, "user_settings.json"))
@@ -70,17 +74,21 @@ def events_operations(df: DataFrame, str_date: str, range_data: str = "M") -> di
         logger.error("Файл с настройками для пользователя пуст или не существует (подробнее в файле utils.log)")
     else:
         # раздел «Курс валют»:
+        list_receipt = {}
+        list_receipt = get_currency_rates(dict_settings)
+        result_dict["currency_rates"] = list_receipt
+
         # раздел «Стоимость акций из S&P 500>>
         # list_receipt = get_stock_price_sp_500(dict_settings)
-        # result_dict["stock_prices"] = list_receipt
+        result_dict["stock_prices"] = list_receipt
 
     # получаем через api данные акций (указанных в list_settings) на дату текущую
 
-    # print(result_dict)
-
     #######
     # выводим в json файл все полученные данные по разделам
+    write_json(result_dict)
 
     # вывод в консоль об окончании отработки функции и что получен такой-то файл.json
-    logger.info("Завершение работы функции")
+    print("Завершение работы функции - получен answer.json")
+    logger.info("Завершение работы функции - получен answer.json")
     return result_dict

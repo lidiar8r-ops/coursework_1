@@ -119,9 +119,10 @@ def filter_by_date(df: pd.DataFrame, str_date: str, range_data: str = "M") -> Da
 
     # 3. Вычисление границы периода
     if range_data == "W":
-        # Начало недели (понедельник)
-        start_of_week = today_date - timedelta(days=today_date.weekday())
-        data_from = start_of_week
+        # Начало недели (понедельник )
+        data_from = today_date - timedelta(days=today_date.weekday())
+
+        # Конец диапазона: текущий день + 1 (чтобы включить текущий день полностью)
         data_to = today_date + timedelta(days=1)
 
     elif range_data == "M":
@@ -229,7 +230,10 @@ def conversion_to_single_currency(df: pd.DataFrame, target_currency: str = "RUB"
 
     # Создаём новый столбец для сумм  (dropna() исключает строки без указанной валюты)
     new_amount_col = f"{amount_col}_{target_currency}"
-    df[new_amount_col] = df[amount_col].copy()
+    # df[new_amount_col] = df[amount_col].copy()
+    df = df.copy()
+    df[new_amount_col] = df[amount_col]
+    # df = df.assign(**{new_amount_col: df[amount_col]})
 
     # Получаем уникальные валюты в данных
     unique_currencies = df[currency_col].dropna().unique()
@@ -406,6 +410,38 @@ def get_user_settings(file_path) -> Dict:
     return data
 
 
+def get_currency_rates(dict_user: Dict) -> List[Dict]:
+    """
+    Функция получает курсы валют.
+
+    :param dict_user: словарь с настройками пользователя, должен содержать:
+        - "user_currencies": список валют (например, ["USD", "EUR"])
+    :return: список словарей с полями 'currency' и 'rate'
+    """
+    stock_data = []  # Результат: данные по валютам
+
+    # Список валют из настроек пользователя
+    currencies = dict_user.get("user_currencies", [])
+    if not currencies:
+        logger.error("Ошибка: список валют 'user_currencies' не указан в настройках.")
+        return stock_data
+
+    # Получение курсов для каждой валюты
+    for currency in currencies:
+        try:
+            exchange_rate = get_exchange_rate(currency)
+            stock_data.append({
+                "currency": currency,
+                "rate": exchange_rate
+            })
+        except Exception as e:
+            logger.error(f"Ошибка при получении курса для {currency}: {e}")
+            continue  # Продолжаем обработку остальных валют
+
+    return stock_data
+
+
+
 def get_stock_price_sp_500(dict_user: dict) -> List[Dict]:
     """
     Функция получает через API FMP текущие цены указанных акций.
@@ -446,7 +482,7 @@ def get_stock_price_sp_500(dict_user: dict) -> List[Dict]:
             )
 
             # Логируем URL для отладки
-            logger.info(f"Запрос к API: {response.url}")
+            # logger.info(f"Запрос к API: {response.url}")
 
             # Проверка HTTP‑статуса
             if response.status_code == 200:
@@ -482,15 +518,9 @@ def get_stock_price_sp_500(dict_user: dict) -> List[Dict]:
     return stock_data
 
 
+def write_json(dict_wr: dict) -> None:
+    # выводим в json файл все полученные данные по разделам
+    with open(os.path.join(DATA_DIR,'answer.json'), 'w') as f:
+        json.dump(dict_wr, f)
 
-dict_settings = get_user_settings(os.path.join(DATA_DIR, "user_settings.json"))
-
-
-#
-# if dict_settings == {}:
-#     logger.error("Файл с настройками для пользователя пуст или не существует (подробнее в файле utils.log)")
-# else:
-#     # раздел «Курс валют»:
-#     data_receipt = get_stock_price(dict_settings)
-#
-# print(data_receipt)
+    return None

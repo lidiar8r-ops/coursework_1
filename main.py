@@ -28,7 +28,7 @@ if __name__ == '__main__':
         # Вызов функции события events_operations
         logger.info("вызов функции events_operations для формирования раздела События")
         try:
-            result = events_operations(df, "24.05.2020", "W")
+            result = events_operations(df, "20.05.2020", "Y")
             print("=" * 20)
             print(json.dumps(result, indent=4, ensure_ascii=False))
             if result is None:
