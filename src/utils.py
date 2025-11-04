@@ -2,7 +2,7 @@ import json
 import os
 import re
 from datetime import date, datetime, timedelta
-from typing import Dict, List
+from typing import Dict, List, Any
 
 import pandas as pd
 import requests
@@ -518,9 +518,24 @@ def get_stock_price_sp_500(dict_user: dict) -> List[Dict]:
     return stock_data
 
 
-def write_json(dict_wr: dict) -> None:
-    # выводим в json файл все полученные данные по разделам
-    with open(os.path.join(DATA_DIR,'answer.json'), 'w') as f:
-        json.dump(dict_wr, f)
+def write_json(dict_wr: Dict[str, Any]) -> None:
+    """
+    Выводит в JSON‑файл все полученные данные по разделам.
+
+    :param dict_wr: словарь с данными для записи. Ключи должны быть строками.
+    :return: None
+    """
+    file_path = os.path.join(DATA_DIR, 'answer.json')
+
+    try:
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(dict_wr, f, ensure_ascii=False, indent=4)
+        logger.info(f"Данные успешно записаны в {file_path}")
+    except (IOError, OSError) as e:
+        logger.error(f"Ошибка при записи файла {file_path}: {e}")
+        raise
+    except TypeError as e:
+        logger.error(f"Неподдерживаемый тип данных в словаре: {e}")
+        raise
 
     return None
