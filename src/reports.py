@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 from typing import Optional
-
 import pandas as pd
 
 from src import app_logger
@@ -11,16 +10,18 @@ from src.utils import conversion_to_single_currency, filter_by_date, write_json
 logger = app_logger.get_logger("reports.log")
 
 
-def spending_by_weekday(transactions: pd.DataFrame, date: Optional[str] = None) -> pd.DataFrame:
+def spending_by_weekday(
+    transactions: pd.DataFrame,
+    date: Optional[str] = None
+) -> pd.DataFrame:
     """
     Возвращает средние траты в каждый из дней недели за последние три месяца (от переданной даты).
-
 
     :param transactions: DataFrame с транзакциями. Должен содержать:
         - столбец с датой (предполагается "Дата платежа")
         - столбец с суммой (new_amount_col, например "Сумма")
     :param date: строка в формате "дд.мм.гггг" (опционально). Если не указана — берётся текущая дата.
-    :return: DataFrame с колонками: "день_недели" (0–6), "средние_траты"
+    :return: DataFrame с колонками: "день_недели", "средние_траты"
     """
     try:
         new_amount_col = f"{LIST_OPERATION[3]}_RUB"
@@ -35,13 +36,13 @@ def spending_by_weekday(transactions: pd.DataFrame, date: Optional[str] = None) 
                 today_dt = datetime.strptime(date, "%d.%m.%Y")
             except ValueError as e:
                 logger.error(f"Некорректный формат даты: {date}. Ошибка: {e}")
-                return pd.DataFrame()  # Возвращаем пустой DataFrame при ошибке
+                return pd.DataFrame(columns=["день_недели", "средние_траты"])
 
         today_date = today_dt.date()
         logger.debug(f"Расчёт ведётся от даты: {today_date}")
 
-        # Вычисление границы периода (последние 3 месяца) — вычитаем ~90 дней
-        data_from = today_date - timedelta(days=90)
+        # Вычисление границы периода (последние 3 месяца)
+        data_from = today_date - pd.DateOffset(months=3)
         data_to = today_date + timedelta(days=1)  # до конца текущего дня
         list_period = [data_from, data_to]
         logger.debug(f"Период анализа: {data_from} – {data_to}")
@@ -49,9 +50,9 @@ def spending_by_weekday(transactions: pd.DataFrame, date: Optional[str] = None) 
         # Фильтрация транзакций: только расходы (сумма < 0)
         if amount_col not in transactions.columns:
             logger.error(f"Столбец '{amount_col}' не найден в данных.")
-            return pd.DataFrame()
+            return pd.DataFrame(columns=["день_недели", "средние_траты"])
 
-        df_expenses = transactions[transactions[amount_col] < 0].copy()
+        df_expenses = transactions[transactions[amount_col] < 0]
         if df_expenses.empty:
             logger.warning("Нет транзакций с расходами за указанный период.")
             return pd.DataFrame(columns=["день_недели", "средние_траты"])
@@ -66,33 +67,47 @@ def spending_by_weekday(transactions: pd.DataFrame, date: Optional[str] = None) 
         result_df = conversion_to_single_currency(df_filtered, "RUB")
         if result_df is None or result_df.empty:
             logger.error("Не удалось конвертировать суммы в RUB.")
-            return pd.DataFrame()
+            return pd.DataFrame(columns=["день_недели", "средние_траты"])
 
-        # Расчёт средних трат по дням недели
+        # Расчёт дня недели
         result_df["день_недели"] = result_df["Дата платежа"].dt.weekday
 
-        avg_spending = result_df.groupby("день_недели", as_index=False)[new_amount_col].mean().round(2).abs()
+        # Группировка и расчёт среднего (гарантируем DataFrame)
+        avg_spending = (
+            result_df
+            .groupby("день_недели", as_index=False)
+            [new_amount_col]
+            .mean()
+            .round(2)
+            .abs()
+        )
 
-        # Переименовываем колонку для ясности
-        avg_spending.rename(columns={new_amount_col: "средние_траты"}, inplace=True)
+        # Переименование колонки (без inplace)
+        # avg_spending = avg_spending.rename(columns={new_amount_col: "средние_траты"})
+        avg_spending = avg_spending.assign(средние_траты=avg_spending[new_amount_col])
+        avg_spending = avg_spending[["день_недели", "средние_траты"]]  # оставляем только нужные столбцы
 
-        # Сортируем по дню недели
-        avg_spending.sort_values("день_недели", inplace=True)
+        # Сортировка (без inplace)
+        avg_spending = avg_spending.sort_values(by="день_недели")
 
+        # Маппинг чисел на названия дней
         days_of_week = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"]
-        # Создаём словарь: число → название дня
         day_map = {i: day for i, day in enumerate(days_of_week)}
-
-        # Заменяем числа на строки
         avg_spending["день_недели"] = avg_spending["день_недели"].map(day_map)
-        # print(avg_spending)
-        logger.info(f"Рассчитаны средние траты по дням недели: {avg_spending.to_dict('records')}")
+
+        logger.info("Рассчитаны средние траты по дням недели")
+
+        # Явное указание типа (для mypy)
+        result_dataframe: pd.DataFrame = avg_spending.copy()
+
+        # Преобразование в словарь (исправленный orient)
+        result_dict = result_dataframe.to_dict(orient="records")
 
         # Запись результата в JSON
-        write_json(avg_spending.to_dict("records"), "reports.json")
+        write_json(result_dict, "reports.json")
 
-        return avg_spending
+        return result_dataframe
 
     except Exception as e:
         logger.critical(f"Неожиданная ошибка в spending_by_weekday: {type(e).__name__}: {e}")
-        return pd.DataFrame()
+        return pd.DataFrame(columns=["день_недели", "средние_траты"])

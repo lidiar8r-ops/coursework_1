@@ -2,7 +2,7 @@ import json
 import os
 import re
 from datetime import date, datetime, timedelta
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 import pandas as pd
 import requests
@@ -153,13 +153,12 @@ def filter_by_date(df: pd.DataFrame, list_period: List) -> DataFrame:
 
     # Преобразование столбца "Дата платежа" в datetime
     try:
-        df["Дата платежа"] = pd.to_datetime(
-            df["Дата платежа"], format="%d.%m.%Y", errors="coerce"  # некорректные значения → NaT
+        df.loc[:, "Дата платежа"] = pd.to_datetime(df.loc[:, "Дата платежа"], format="%d.%m.%Y", errors="coerce"  # некорректные значения → NaT
         )
     except Exception as e:
         logger.error(f"Ошибка при преобразовании столбца 'Дата платежа': {e}")
         # return list_dict
-        return None
+        return pd.DataFrame()
 
     # Фильтрация
     mask = (df["Дата платежа"] >= data_from_ts) & (df["Дата платежа"] < data_to_ts)
@@ -221,7 +220,7 @@ def conversion_to_single_currency(df: pd.DataFrame, target_currency: str = "RUB"
     """
     #
     currency_col = LIST_OPERATION[2]
-    amount_col = LIST_OPERATION[3]
+    amount_col = str(LIST_OPERATION[3])
 
     # Убедимся, что сумма — числовая
     if not pd.api.types.is_numeric_dtype(df[amount_col]):
@@ -229,7 +228,7 @@ def conversion_to_single_currency(df: pd.DataFrame, target_currency: str = "RUB"
             df[amount_col] = pd.to_numeric(df[amount_col], errors="coerce")
         except Exception as e:
             logger.error(f"Не удалось преобразовать столбец '{amount_col}' в число: {e}")
-            return None
+            return pd.DataFrame()
 
     # Создаём новый столбец для сумм  (dropna() исключает строки без указанной валюты)
     new_amount_col = f"{amount_col}_{target_currency}"
@@ -278,16 +277,16 @@ def get_data_from_expensess(df: pd.DataFrame) -> Dict:
     if new_amount_col not in df.columns:
         logger.error(f"Колонка '{new_amount_col}' не найдена в DataFrame")
         # raise KeyError(f"Колонка '{new_amount_col}' не найдена в DataFrame")
-        return []
+        return {}
 
     # Убедимся, что колонка — числовая
     if not pd.api.types.is_numeric_dtype(df[new_amount_col]):
         try:
             df[new_amount_col] = pd.to_numeric(df[new_amount_col], errors="coerce")
         except Exception as e:
-            logger.errorr(f"Не удалось преобразовать колонку '{new_amount_col}' в число: {e}")
+            logger.error(f"Не удалось преобразовать колонку '{new_amount_col}' в число: {e}")
             # raise ValueError(f"Не удалось преобразовать колонку '{new_amount_col}' в число: {e}")
-            return []
+            return {}
 
     # Фильтруем отрицательные значения (расходы) и суммируем
     expenses = df.loc[df[new_amount_col] < 0, new_amount_col]
@@ -352,16 +351,16 @@ def get_data_from_income(df: pd.DataFrame) -> Dict:
     if new_amount_col not in df.columns:
         logger.error(f"Колонка '{new_amount_col}' не найдена в DataFrame")
         # raise KeyError(f"Колонка '{new_amount_col}' не найдена в DataFrame")
-        return []
+        return {}
 
     # Убедимся, что колонка — числовая
     if not pd.api.types.is_numeric_dtype(df[new_amount_col]):
         try:
             df[new_amount_col] = pd.to_numeric(df[new_amount_col], errors="coerce")
         except Exception as e:
-            logger.errorr(f"Не удалось преобразовать колонку '{new_amount_col}' в число: {e}")
+            logger.error(f"Не удалось преобразовать колонку '{new_amount_col}' в число: {e}")
             # raise ValueError(f"Не удалось преобразовать колонку '{new_amount_col}' в число: {e}")
-            return []
+            return {}
 
     # Фильтруем Положительные значения (доходы) и суммируем
     income = df.loc[df[new_amount_col] > 0, new_amount_col]
@@ -422,7 +421,7 @@ def get_currency_rates(dict_user: Dict) -> List[Dict]:
         - "user_currencies": список валют (например, ["USD", "EUR"])
     :return: список словарей с полями 'currency' и 'rate'
     """
-    stock_data = []  # Результат: данные по валютам
+    stock_data: list[dict[str, Any]] = []  # Результат: данные по валютам
 
     # Список валют из настроек пользователя
     currencies = dict_user.get("user_currencies", [])
@@ -451,7 +450,7 @@ def get_stock_price_sp_500(dict_user: dict) -> List[Dict]:
         - "user_stocks": список тикеров акций (например, ["AAPL", "MSFT"])
     :return: список словарей с полями 'stock' и 'price'
     """
-    stock_data = []  # Результат: данные по акциям
+    stock_data: list[dict[str, Any]] = [] # Результат: данные по акциям
 
     # Проверка API-ключа
     api_key = os.getenv("API_KEY_SP_500")
@@ -513,7 +512,7 @@ def get_stock_price_sp_500(dict_user: dict) -> List[Dict]:
     return stock_data
 
 
-def write_json(dict_wr: Dict[str, Any], name_file: str = "answer.json") -> None:
+def write_json(dict_wr:  Union[Dict[str, Any], List[Dict[Any, Any]]], name_file: str = "answer.json") -> None:
     """
     Выводит в JSON‑файл все полученные данные по разделам.
 

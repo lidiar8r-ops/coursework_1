@@ -69,26 +69,5 @@
             "rate": 93.1607
         }
     ],
-    "stock_prices": [
-        {
-            "stock": "AAPL",
-            "price": 438
-        },
-        {
-            "stock": "AMZN",
-            "price": 13337
-        },
-        {
-            "stock": "GOOGL",
-            "price": 21869
-        },
-        {
-            "stock": "MSFT",
-            "price": 21869
-        },
-        {
-            "stock": "TSLA",
-            "price": 238
-        }
-    ]
+    "stock_prices": []
 }
