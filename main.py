@@ -40,9 +40,9 @@ if __name__ == '__main__':
         # Вызов функции анадиз повышенного кешбека get_profitable_cashback
         # logger.info("вызов функции get_profitable_cashback анализ повышенного кешбека для формирования раздела Сервисы")
         # result = get_profitable_cashback(df, "2019", "10")
+        # print("=" * 20)
+        # print(json.dumps(result, indent=4, ensure_ascii=False))
+        result = spending_by_weekday(df,"01.01.2022")
         print("=" * 20)
-        print(json.dumps(result, indent=4, ensure_ascii=False))
-        spending_by_weekday(df,"01.11.2019")
-        print("=" * 20)
-        print(json.dumps(result, indent=4, ensure_ascii=False))
+        print(json.dumps(result.to_dict('records'), indent=4, ensure_ascii=False))
     logger.info("Завершение работы программы")
