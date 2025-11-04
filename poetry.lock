@@ -686,7 +686,7 @@ version = "2.3.4"
 description = "Fundamental package for array computing in Python"
 optional = false
 python-versions = ">=3.11"
-groups = ["main"]
+groups = ["main", "types"]
 files = [
     {file = "numpy-2.3.4-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:e78aecd2800b32e8347ce49316d3eaf04aed849cd5b38e0af39f829a4e59f5eb"},
     {file = "numpy-2.3.4-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:7fd09cc5d65bda1e79432859c40978010622112e9194e581e3415a3eccc7f43f"},
@@ -886,6 +886,22 @@ spss = ["pyreadstat (>=1.2.0)"]
 sql-other = ["SQLAlchemy (>=2.0.0)", "adbc-driver-postgresql (>=0.8.0)", "adbc-driver-sqlite (>=0.8.0)"]
 test = ["hypothesis (>=6.46.1)", "pytest (>=7.3.2)", "pytest-xdist (>=2.2.0)"]
 xml = ["lxml (>=4.9.2)"]
+
+[[package]]
+name = "pandas-stubs"
+version = "2.3.2.250926"
+description = "Type annotations for pandas"
+optional = false
+python-versions = ">=3.10"
+groups = ["types"]
+files = [
+    {file = "pandas_stubs-2.3.2.250926-py3-none-any.whl", hash = "sha256:81121818453dcfe00f45c852f4dceee043640b813830f6e7bd084a4ef7ff7270"},
+    {file = "pandas_stubs-2.3.2.250926.tar.gz", hash = "sha256:c64b9932760ceefb96a3222b953e6a251321a9832a28548be6506df473a66406"},
+]
+
+[package.dependencies]
+numpy = ">=1.23.5"
+types-pytz = ">=2022.1.1"
 
 [[package]]
 name = "pathspec"
@@ -1161,6 +1177,72 @@ files = [
 ]
 
 [[package]]
+name = "types-flake8"
+version = "7.3.0.20250622"
+description = "Typing stubs for flake8"
+optional = false
+python-versions = ">=3.9"
+groups = ["types"]
+files = [
+    {file = "types_flake8-7.3.0.20250622-py3-none-any.whl", hash = "sha256:6d5a10d3578ec78045a99b599cf91dbffc2eca7a3820df1bfc7cd959e81d4253"},
+    {file = "types_flake8-7.3.0.20250622.tar.gz", hash = "sha256:caf6d06f2e5c40495947db230f127b85b57ada61d299c6ce043cc6d68eb2c749"},
+]
+
+[package.dependencies]
+types-pyflakes = "*"
+
+[[package]]
+name = "types-openpyxl"
+version = "3.1.5.20250919"
+description = "Typing stubs for openpyxl"
+optional = false
+python-versions = ">=3.9"
+groups = ["types"]
+files = [
+    {file = "types_openpyxl-3.1.5.20250919-py3-none-any.whl", hash = "sha256:bd06f18b12fd5e1c9f0b666ee6151d8140216afa7496f7ebb9fe9d33a1a3ce99"},
+    {file = "types_openpyxl-3.1.5.20250919.tar.gz", hash = "sha256:232b5906773eebace1509b8994cdadda043f692cfdba9bfbb86ca921d54d32d7"},
+]
+
+[[package]]
+name = "types-pyflakes"
+version = "3.4.0.20250701"
+description = "Typing stubs for pyflakes"
+optional = false
+python-versions = ">=3.9"
+groups = ["types"]
+files = [
+    {file = "types_pyflakes-3.4.0.20250701-py3-none-any.whl", hash = "sha256:c8ebd5fb96b54782ecf45c0624fe4ec56447d044d0c6fc84958d296a75823e24"},
+    {file = "types_pyflakes-3.4.0.20250701.tar.gz", hash = "sha256:84968d6cdbae4ccfc32a3e0153a878a7b192cc14ce0a8ce084a04cadb23f0498"},
+]
+
+[[package]]
+name = "types-pytz"
+version = "2025.2.0.20250809"
+description = "Typing stubs for pytz"
+optional = false
+python-versions = ">=3.9"
+groups = ["types"]
+files = [
+    {file = "types_pytz-2025.2.0.20250809-py3-none-any.whl", hash = "sha256:4f55ed1b43e925cf851a756fe1707e0f5deeb1976e15bf844bcaa025e8fbd0db"},
+    {file = "types_pytz-2025.2.0.20250809.tar.gz", hash = "sha256:222e32e6a29bb28871f8834e8785e3801f2dc4441c715cd2082b271eecbe21e5"},
+]
+
+[[package]]
+name = "types-requests"
+version = "2.32.4.20250913"
+description = "Typing stubs for requests"
+optional = false
+python-versions = ">=3.9"
+groups = ["types"]
+files = [
+    {file = "types_requests-2.32.4.20250913-py3-none-any.whl", hash = "sha256:78c9c1fffebbe0fa487a418e0fa5252017e9c60d1a2da394077f1780f655d7e1"},
+    {file = "types_requests-2.32.4.20250913.tar.gz", hash = "sha256:abd6d4f9ce3a9383f269775a9835a4c24e5cd6b9f647d64f88aa4613c33def5d"},
+]
+
+[package.dependencies]
+urllib3 = ">=2"
+
+[[package]]
 name = "typing-extensions"
 version = "4.15.0"
 description = "Backported and Experimental Type Hints for Python 3.9+"
@@ -1190,7 +1272,7 @@ version = "2.5.0"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 optional = false
 python-versions = ">=3.9"
-groups = ["main"]
+groups = ["main", "types"]
 files = [
     {file = "urllib3-2.5.0-py3-none-any.whl", hash = "sha256:e6b01673c0fa6a13e374b50871808eb3bf7046c4b125b216f6bf1cc604cff0dc"},
     {file = "urllib3-2.5.0.tar.gz", hash = "sha256:3fc47733c7e419d4bc3f6b3dc2b4f890bb743906a30d56ba4a5bfa4bbff92760"},
@@ -1314,4 +1396,4 @@ repair = ["scipy (>=1.6.3)"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.13"
-content-hash = "c7df5c615b4fc24c503c2b8afa89fb1ed556799a22952d77c08458d7e3fdc1f2"
+content-hash = "ca18538a0135b46321750cd3943f04669461d81c9a2a91a78d7d91a54b6aed72"
