@@ -99,9 +99,7 @@ def filter_by_date(df: pd.DataFrame, str_date: str, range_data: str = "M") -> Da
         "ALL" — все данные до указанной даты.
     :return: список словарей (записи DataFrame)
     """
-    # list_dict: List[Dict] = []
-
-    # 1. Проверка и нормализация входной даты
+    # Проверка и нормализация входной даты
     if not str_date or str_date.strip() == "":
         logger.info("Дата не указана, берём текущую")
         str_date = datetime.now().strftime("%d.%m.%Y")
@@ -114,10 +112,10 @@ def filter_by_date(df: pd.DataFrame, str_date: str, range_data: str = "M") -> Da
         logger.error(f"Некорректный формат даты: {str_date}. Ошибка: {e}")
         return df
 
-    # 2. Нормализация range_data
+    # Нормализация range_data
     range_data = (range_data or "M").upper()
 
-    # 3. Вычисление границы периода
+    #  Вычисление границы периода
     if range_data == "W":
         # Начало недели (понедельник )
         data_from = today_date - timedelta(days=today_date.weekday())
@@ -140,11 +138,11 @@ def filter_by_date(df: pd.DataFrame, str_date: str, range_data: str = "M") -> Da
         data_from = date(1800, 1, 1)
         data_to = today_date + timedelta(days=1)
 
-    # 4. Преобразование границ  с и по в pd.Timestamp для сравнения с datetime
+    #  Преобразование границ  с и по в pd.Timestamp для сравнения с datetime
     data_from_ts = pd.Timestamp(data_from)
     data_to_ts = pd.Timestamp(data_to)
 
-    # 5. Преобразование столбца "Дата платежа" в datetime
+    # Преобразование столбца "Дата платежа" в datetime
     try:
         df["Дата платежа"] = pd.to_datetime(
             df["Дата платежа"], format="%d.%m.%Y", errors="coerce"  # некорректные значения → NaT
@@ -154,15 +152,11 @@ def filter_by_date(df: pd.DataFrame, str_date: str, range_data: str = "M") -> Da
         # return list_dict
         return list_dict
 
-    # 6. Фильтрация
+    # Фильтрация
     mask = (df["Дата платежа"] >= data_from_ts) & (df["Дата платежа"] < data_to_ts)
     filtered_df = df.loc[mask]
 
-    # # 7. Преобразование в список словарей
-    # list_dict = filtered_df.to_dict(orient="records")
-
     return filtered_df
-    # return list_dict
 
 
 def get_exchange_rate(carrency_code: str, target_currency: str = "RUB") -> float:
@@ -518,14 +512,14 @@ def get_stock_price_sp_500(dict_user: dict) -> List[Dict]:
     return stock_data
 
 
-def write_json(dict_wr: Dict[str, Any]) -> None:
+def write_json(dict_wr: Dict[str, Any], name_file: str = "answer.json") -> None:
     """
     Выводит в JSON‑файл все полученные данные по разделам.
 
     :param dict_wr: словарь с данными для записи. Ключи должны быть строками.
     :return: None
     """
-    file_path = os.path.join(DATA_DIR, 'answer.json')
+    file_path = os.path.join(DATA_DIR, name_file)
 
     try:
         with open(file_path, 'w', encoding='utf-8') as f:

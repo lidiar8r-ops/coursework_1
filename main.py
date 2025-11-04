@@ -27,18 +27,19 @@ if __name__ == '__main__':
         # print(json.dumps(df.to_dict(), indent=4, ensure_ascii=False))
         # Вызов функции события events_operations
         logger.info("вызов функции events_operations для формирования раздела События")
-        try:
-            result = events_operations(df, "20.05.2020", "Y")
-            print("=" * 20)
-            print(json.dumps(result, indent=4, ensure_ascii=False))
-            if result is None:
-                logger.error("Ошибка функции events_operations для раздела События")
-        except Exception as e:
-                logger.error(f"Ошибка функции events_operations для раздела События - {e}")
+        # try:
+        #     # закомментируем временно
+        #     result = events_operations(df, "20.05.2020", "Y")
+        #     print("=" * 20)
+        #     print(json.dumps(result, indent=4, ensure_ascii=False))
+        #     if result is None:
+        #         logger.error("Ошибка функции events_operations для раздела События")
+        # except Exception as e:
+        #         logger.error(f"Ошибка функции events_operations для раздела События - {e}")
 
-        # Вызов функции события get_profitable_cashback
-        logger.info("вызов функции get_profitable_cashback для формирования раздела События")
-        result = get_profitable_cashback(df, "2020", "5")
+        # Вызов функции анадиз повышенного кешбека get_profitable_cashback
+        logger.info("вызов функции get_profitable_cashback анализ повышенного кешбека для формирования раздела Сервисы")
+        result = get_profitable_cashback(df, "2019", "10")
         print("=" * 20)
         print(json.dumps(result, indent=4, ensure_ascii=False))
         # print("=" * 20)
