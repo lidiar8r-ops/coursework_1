@@ -89,6 +89,6 @@ def events_operations(df: DataFrame, str_date: str, range_data: str = "M") -> di
     write_json(result_dict)
 
     # вывод в консоль об окончании отработки функции и что получен такой-то файл.json
-    print("Завершение работы функции - получен answer.json")
+    print("Завершение работы функции - получен файл answer.json")
     logger.info("Завершение работы функции - получен answer.json")
     return result_dict

@@ -76,19 +76,19 @@
         },
         {
             "stock": "AMZN",
-            "price": 13354
+            "price": 13351
         },
         {
             "stock": "GOOGL",
-            "price": 21738
+            "price": 21858
         },
         {
             "stock": "MSFT",
-            "price": 21738
+            "price": 21858
         },
         {
             "stock": "TSLA",
-            "price": 242
+            "price": 238
         }
     ]
 }
