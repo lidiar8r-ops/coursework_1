@@ -96,7 +96,7 @@ def spending_by_weekday(transactions: pd.DataFrame, date: Optional[str] = None) 
         logger.info(f"Рассчитаны средние траты по дням недели: {avg_spending.to_dict('records')}")
 
         # Запись результата в JSON
-        write_json(avg_spending.to_dict('records'), "reportss.json")
+        write_json(avg_spending.to_dict('records'), "reports.json")
 
 
         return avg_spending

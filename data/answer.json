@@ -76,7 +76,7 @@
         },
         {
             "stock": "AMZN",
-            "price": 13351
+            "price": 13335
         },
         {
             "stock": "GOOGL",
@@ -88,7 +88,7 @@
         },
         {
             "stock": "TSLA",
-            "price": 238
+            "price": 239
         }
     ]
 }

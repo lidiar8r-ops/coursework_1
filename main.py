@@ -19,7 +19,7 @@ if __name__ == '__main__':
 
     # Вызов функции считывание данных из файла и фильтруем по статусу операции <<OK>>
     print(f"Считывание данных из файла {LIST_OPERATION[0]}")
-    logger.info(f"Считывание данных из файла {LIST_OPERATION[0]}"\n)
+    logger.info(f"Считывание данных из файла {LIST_OPERATION[0]}\n")
 
     df = get_list_operation(path_s, LIST_OPERATION[1])
 
