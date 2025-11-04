@@ -9,7 +9,7 @@ from src.utils import (
     conversion_to_single_currency,
     get_data_from_expensess,
     get_user_settings,
-    get_stock_price_sp_500, get_data_from_income, filter_by_date, get_currency_rates, write_json
+    get_stock_price_sp_500, get_data_from_income, filter_by_date, get_currency_rates, write_json, get_period_operation
 )
 
 logger = app_logger.get_logger("views.log")
@@ -52,7 +52,8 @@ def events_operations(df: DataFrame, str_date: str, range_data: str = "M") -> di
 
     # # Обработка полученных данных
     # фильтрация данных по периоду
-    result_df_p = filter_by_date(df, str_date, range_data)
+    list_period = get_period_operation(str_date, range_data)
+    result_df_p = filter_by_date(df, list_period)
 
     # получаем сумму платежа в рублях
     result_df = conversion_to_single_currency(result_df_p, "RUB")

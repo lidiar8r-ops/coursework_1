@@ -11,12 +11,12 @@ logger = app_logger.get_logger("services.log")
 
 
 
-def get_profitable_cashback(df: DataFrame, str_year: str, str_month: str) -> Dict[str, float]:
+def get_profitable_cashback(data: DataFrame, str_year: str, str_month: str) -> Dict[str, float]:
     """
     Анализирует, какие категории были наиболее выгодными для выбора
     в качестве категорий повышенного кэшбэка.
 
-    :param df: DataFrame с транзакциями. Должен содержать столбцы:
+    :param data: DataFrame с транзакциями. Должен содержать столбцы:
         - "Дата платежа" (datetime или преобразуемый в datetime)
         - "Кэшбэк" (числовой, >= 0)
         - LIST_OPERATION[4] (название категории, str)
@@ -28,7 +28,7 @@ def get_profitable_cashback(df: DataFrame, str_year: str, str_month: str) -> Dic
     try:
         logger.info(
             f"Начало анализа кэшбэка за {str_year}-{str_month}. "
-            f"Всего транзакций: {len(df)}"
+            f"Всего транзакций: {len(data)}"
         )
 
         # Преобразование строк в числа
@@ -42,25 +42,25 @@ def get_profitable_cashback(df: DataFrame, str_year: str, str_month: str) -> Dic
         logger.debug(f"Преобразовано: year={year}, month={month}")
 
         # преобразование столбца "Дата платежа"
-        if not pd.api.types.is_datetime64_any_dtype(df["Дата платежа"]):
+        if not pd.api.types.is_datetime64_any_dtype(data["Дата платежа"]):
             logger.info("Столбец 'Дата платежа' не в формате datetime — выполняем преобразование.")
             try:
-                df["Дата платежа"] = pd.to_datetime(df["Дата платежа"], dayfirst=True, errors="raise")
+                data["Дата платежа"] = pd.to_datetime(data["Дата платежа"], dayfirst=True, errors="raise")
             except Exception as e:
                 logger.error(f"Ошибка преобразования 'Дата платежа' в datetime: {e}")
                 return {}
 
         # Фильтрация: год, месяц и положительный кэшбэк
         mask = (
-            (df["Дата платежа"].dt.year == year) &
-            (df["Дата платежа"].dt.month == month) &
-            (df["Кэшбэк"] > 0)
+            (data["Дата платежа"].dt.year == year) &
+            (data["Дата платежа"].dt.month == month) &
+            (data["Кэшбэк"] > 0)
         )
-        filtered_df = df.loc[mask].copy()  # копирование
+        filtered_data = data.loc[mask].copy()  # копирование
 
-        logger.info(f"Отфильтровано транзакций за {year}-{month} с кэшбэком > 0: {len(filtered_df)}")
+        logger.info(f"Отфильтровано транзакций за {year}-{month} с кэшбэком > 0: {len(filtered_data)}")
 
-        if filtered_df.empty:
+        if filtered_data.empty:
             logger.warning("Нет транзакций с кэшбэком за указанный период.")
             return {}
 
@@ -69,7 +69,7 @@ def get_profitable_cashback(df: DataFrame, str_year: str, str_month: str) -> Dic
 
         # Группировка и суммирование кэшбэка
         cashback_by_category = (
-            filtered_df
+            filtered_data
             .groupby(category_col, as_index=False)["Кэшбэк"]
             .sum()
             .round(0)

@@ -85,12 +85,9 @@ def get_list_operation(
         logger.error(f"Необработанная ошибка: {ex}")
         return result_df
 
-
-def filter_by_date(df: pd.DataFrame, str_date: str, range_data: str = "M") -> DataFrame:
+def get_period_operation(str_date: str, range_data: str = "M") -> list:
     """
-    Фильтрует данные по периоду и возвращает список словарей.
-
-    :param df: DataFrame с колонкой "Дата платежа" в формате ДД.ММ.ГГГГ
+    Получает период и возвращает список даты с и по.
     :param str_date: дата в строковом виде (например, "19.05.2025")
     :param range_data: диапазон данных:
         "W" — неделя, на которую приходится дата;
@@ -119,7 +116,6 @@ def filter_by_date(df: pd.DataFrame, str_date: str, range_data: str = "M") -> Da
     if range_data == "W":
         # Начало недели (понедельник )
         data_from = today_date - timedelta(days=today_date.weekday())
-
         # Конец диапазона: текущий день + 1 (чтобы включить текущий день полностью)
         data_to = today_date + timedelta(days=1)
 
@@ -138,9 +134,21 @@ def filter_by_date(df: pd.DataFrame, str_date: str, range_data: str = "M") -> Da
         data_from = date(1800, 1, 1)
         data_to = today_date + timedelta(days=1)
 
+    return [data_from, data_to]
+
+
+
+def filter_by_date(df: pd.DataFrame, list_period: List) -> DataFrame:
+    """
+    Фильтрует данные по периоду и возвращает список словарей.
+
+    :param df: DataFrame с колонкой "Дата платежа" в формате ДД.ММ.ГГГГ
+    :param list_period: список с периодами дат
+    :return: список словарей (записи DataFrame)
+    # """
     #  Преобразование границ  с и по в pd.Timestamp для сравнения с datetime
-    data_from_ts = pd.Timestamp(data_from)
-    data_to_ts = pd.Timestamp(data_to)
+    data_from_ts = pd.Timestamp(list_period[0])
+    data_to_ts = pd.Timestamp(list_period[1])
 
     # Преобразование столбца "Дата платежа" в datetime
     try:
@@ -210,7 +218,7 @@ def conversion_to_single_currency(df: pd.DataFrame, target_currency: str = "RUB"
     :param target_currency: целевая валюта для конвертации (по умолчанию 'RUB')
     :return: DataFrame с пересчитанными суммами в целевой валюте
     """
-    # Проверяем наличие нужных столбцов
+    #
     currency_col = LIST_OPERATION[2]
     amount_col = LIST_OPERATION[3]
 

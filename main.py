@@ -5,6 +5,7 @@ import pandas as pd
 
 from src import app_logger
 from src.config import DATA_DIR, LIST_OPERATION
+from src.reports import spending_by_weekday
 from src.services import get_profitable_cashback
 from src.utils import get_list_operation
 from src.views import events_operations
@@ -36,12 +37,12 @@ if __name__ == '__main__':
         #         logger.error("Ошибка функции events_operations для раздела События")
         # except Exception as e:
         #         logger.error(f"Ошибка функции events_operations для раздела События - {e}")
-
         # Вызов функции анадиз повышенного кешбека get_profitable_cashback
-        logger.info("вызов функции get_profitable_cashback анализ повышенного кешбека для формирования раздела Сервисы")
-        result = get_profitable_cashback(df, "2019", "10")
+        # logger.info("вызов функции get_profitable_cashback анализ повышенного кешбека для формирования раздела Сервисы")
+        # result = get_profitable_cashback(df, "2019", "10")
         print("=" * 20)
         print(json.dumps(result, indent=4, ensure_ascii=False))
-        # print("=" * 20)
-
+        spending_by_weekday(df,"01.11.2019")
+        print("=" * 20)
+        print(json.dumps(result, indent=4, ensure_ascii=False))
     logger.info("Завершение работы программы")
