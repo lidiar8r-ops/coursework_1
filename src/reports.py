@@ -1,6 +1,7 @@
-import pandas as pd
 from datetime import datetime, timedelta
 from typing import Optional
+
+import pandas as pd
 
 from src import app_logger
 from src.config import LIST_OPERATION
@@ -70,13 +71,7 @@ def spending_by_weekday(transactions: pd.DataFrame, date: Optional[str] = None) 
         # Расчёт средних трат по дням недели
         result_df["день_недели"] = result_df["Дата платежа"].dt.weekday
 
-        avg_spending = (
-            result_df
-            .groupby("день_недели", as_index=False)[new_amount_col]
-            .mean()
-            .round(2)
-            .abs()
-        )
+        avg_spending = result_df.groupby("день_недели", as_index=False)[new_amount_col].mean().round(2).abs()
 
         # Переименовываем колонку для ясности
         avg_spending.rename(columns={new_amount_col: "средние_траты"}, inplace=True)
@@ -84,9 +79,7 @@ def spending_by_weekday(transactions: pd.DataFrame, date: Optional[str] = None) 
         # Сортируем по дню недели
         avg_spending.sort_values("день_недели", inplace=True)
 
-        days_of_week = [
-            "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"
-        ]
+        days_of_week = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"]
         # Создаём словарь: число → название дня
         day_map = {i: day for i, day in enumerate(days_of_week)}
 
@@ -96,8 +89,7 @@ def spending_by_weekday(transactions: pd.DataFrame, date: Optional[str] = None) 
         logger.info(f"Рассчитаны средние траты по дням недели: {avg_spending.to_dict('records')}")
 
         # Запись результата в JSON
-        write_json(avg_spending.to_dict('records'), "reports.json")
-
+        write_json(avg_spending.to_dict("records"), "reports.json")
 
         return avg_spending
 

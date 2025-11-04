@@ -1,5 +1,5 @@
-import json
 import os.path
+
 import pandas as pd
 from pandas import DataFrame
 
@@ -7,9 +7,14 @@ from src import app_logger
 from src.config import DATA_DIR
 from src.utils import (
     conversion_to_single_currency,
+    filter_by_date,
+    get_currency_rates,
     get_data_from_expensess,
+    get_data_from_income,
+    get_period_operation,
+    get_stock_price_sp_500,
     get_user_settings,
-    get_stock_price_sp_500, get_data_from_income, filter_by_date, get_currency_rates, write_json, get_period_operation
+    write_json,
 )
 
 logger = app_logger.get_logger("views.log")
@@ -41,12 +46,12 @@ def events_operations(df: DataFrame, str_date: str, range_data: str = "M") -> di
         Курс валют.
         Стоимость акций из S&P 500.
     """
-    ###### СТРАНИЦА «СОБЫТИЯ»
+    #  СТРАНИЦА «СОБЫТИЯ»
     logger.info("Начало работы функции")
 
     if df is None:
         logger.info("Нет данных в файле")
-        return f"Нет данных в файле"
+        return "Нет данных в файле"
     elif not isinstance(df, pd.DataFrame):
         logger.error("df должен быть pandas.DataFrame")
 

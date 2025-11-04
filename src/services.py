@@ -1,6 +1,7 @@
+from typing import Dict
+
 import pandas as pd
 from pandas import DataFrame
-from typing import Dict
 
 from src import app_logger
 from src.config import LIST_OPERATION
@@ -8,7 +9,6 @@ from src.utils import write_json
 
 # Настройка логирования
 logger = app_logger.get_logger("services.log")
-
 
 
 def get_profitable_cashback(data: DataFrame, str_year: str, str_month: str) -> Dict[str, float]:
@@ -26,10 +26,7 @@ def get_profitable_cashback(data: DataFrame, str_year: str, str_month: str) -> D
              Пустой dict, если данных нет.
     """
     try:
-        logger.info(
-            f"Начало анализа кэшбэка за {str_year}-{str_month}. "
-            f"Всего транзакций: {len(data)}"
-        )
+        logger.info(f"Начало анализа кэшбэка за {str_year}-{str_month}. " f"Всего транзакций: {len(data)}")
 
         # Преобразование строк в числа
         try:
@@ -51,11 +48,7 @@ def get_profitable_cashback(data: DataFrame, str_year: str, str_month: str) -> D
                 return {}
 
         # Фильтрация: год, месяц и положительный кэшбэк
-        mask = (
-            (data["Дата платежа"].dt.year == year) &
-            (data["Дата платежа"].dt.month == month) &
-            (data["Кэшбэк"] > 0)
-        )
+        mask = (data["Дата платежа"].dt.year == year) & (data["Дата платежа"].dt.month == month) & (data["Кэшбэк"] > 0)
         filtered_data = data.loc[mask].copy()  # копирование
 
         logger.info(f"Отфильтровано транзакций за {year}-{month} с кэшбэком > 0: {len(filtered_data)}")
@@ -68,12 +61,7 @@ def get_profitable_cashback(data: DataFrame, str_year: str, str_month: str) -> D
         category_col = LIST_OPERATION[4]
 
         # Группировка и суммирование кэшбэка
-        cashback_by_category = (
-            filtered_data
-            .groupby(category_col, as_index=False)["Кэшбэк"]
-            .sum()
-            .round(0)
-        )
+        cashback_by_category = filtered_data.groupby(category_col, as_index=False)["Кэшбэк"].sum().round(0)
 
         # Сортировка по убыванию и преобразование в словарь
         cashback_by_category.sort_values("Кэшбэк", ascending=False, inplace=True)

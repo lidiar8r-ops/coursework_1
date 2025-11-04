@@ -2,7 +2,7 @@ import json
 import os
 import re
 from datetime import date, datetime, timedelta
-from typing import Dict, List, Any
+from typing import Any, Dict, List
 
 import pandas as pd
 import requests
@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from pandas import DataFrame
 
 from src import app_logger
-from src.config import LIST_OPERATION, URL_EXCHANGE, URL_EXCHANGE_SP_500, DATA_DIR
+from src.config import DATA_DIR, LIST_OPERATION, URL_EXCHANGE, URL_EXCHANGE_SP_500
 
 # import yfinance as yf
 
@@ -85,6 +85,7 @@ def get_list_operation(
         logger.error(f"Необработанная ошибка: {ex}")
         return result_df
 
+
 def get_period_operation(str_date: str, range_data: str = "M") -> list:
     """
     Получает период и возвращает список даты с и по.
@@ -107,7 +108,8 @@ def get_period_operation(str_date: str, range_data: str = "M") -> list:
         today_date = today_dt.date()  # работаем с датой (без времени)
     except ValueError as e:
         logger.error(f"Некорректный формат даты: {str_date}. Ошибка: {e}")
-        return df
+        str_date = datetime.now().strftime("%d.%m.%Y")
+        return [str_date , str_date]
 
     # Нормализация range_data
     range_data = (range_data or "M").upper()
@@ -137,7 +139,6 @@ def get_period_operation(str_date: str, range_data: str = "M") -> list:
     return [data_from, data_to]
 
 
-
 def filter_by_date(df: pd.DataFrame, list_period: List) -> DataFrame:
     """
     Фильтрует данные по периоду и возвращает список словарей.
@@ -145,7 +146,7 @@ def filter_by_date(df: pd.DataFrame, list_period: List) -> DataFrame:
     :param df: DataFrame с колонкой "Дата платежа" в формате ДД.ММ.ГГГГ
     :param list_period: список с периодами дат
     :return: список словарей (записи DataFrame)
-    # """
+    #"""
     #  Преобразование границ  с и по в pd.Timestamp для сравнения с datetime
     data_from_ts = pd.Timestamp(list_period[0])
     data_to_ts = pd.Timestamp(list_period[1])
@@ -158,7 +159,7 @@ def filter_by_date(df: pd.DataFrame, list_period: List) -> DataFrame:
     except Exception as e:
         logger.error(f"Ошибка при преобразовании столбца 'Дата платежа': {e}")
         # return list_dict
-        return list_dict
+        return None
 
     # Фильтрация
     mask = (df["Дата платежа"] >= data_from_ts) & (df["Дата платежа"] < data_to_ts)
@@ -393,6 +394,7 @@ def get_data_from_income(df: pd.DataFrame) -> Dict:
 
     return result
 
+
 def get_user_settings(file_path) -> Dict:
     """"""
     # считываем из file_path данные получаем словарь с данными data
@@ -432,16 +434,12 @@ def get_currency_rates(dict_user: Dict) -> List[Dict]:
     for currency in currencies:
         try:
             exchange_rate = get_exchange_rate(currency)
-            stock_data.append({
-                "currency": currency,
-                "rate": exchange_rate
-            })
+            stock_data.append({"currency": currency, "rate": exchange_rate})
         except Exception as e:
             logger.error(f"Ошибка при получении курса для {currency}: {e}")
             continue  # Продолжаем обработку остальных валют
 
     return stock_data
-
 
 
 def get_stock_price_sp_500(dict_user: dict) -> List[Dict]:
@@ -471,17 +469,10 @@ def get_stock_price_sp_500(dict_user: dict) -> List[Dict]:
         # Нормализуем тикер
         symbol = stock.strip().upper()
 
-        params = {
-            'symbol': symbol,
-            'apikey': api_key
-        }
+        params = {"symbol": symbol, "apikey": api_key}
 
         try:
-            response = requests.get(
-                URL_EXCHANGE_SP_500,
-                params=params,
-                timeout=10
-            )
+            response = requests.get(URL_EXCHANGE_SP_500, params=params, timeout=10)
 
             # Логируем URL для отладки
             # logger.info(f"Запрос к API: {response.url}")
@@ -495,21 +486,23 @@ def get_stock_price_sp_500(dict_user: dict) -> List[Dict]:
                     quote = data[0]  # Первый элемент списка — данные по акции
                     try:
                         exchange_rate = get_exchange_rate("USD")
-                        price_from = quote['price']
+                        price_from = quote["price"]
                         price = round(float(price_from * exchange_rate))
-                        stock_data.append({
-                            'stock': symbol,
-                            # 'price_from': price_from,
-                            # 'exchange_rate': exchange_rate,
-                            'price': price
-                        })
+                        stock_data.append(
+                            {
+                                "stock": symbol,
+                                # 'price_from': price_from,
+                                # 'exchange_rate': exchange_rate,
+                                "price": price,
+                            }
+                        )
                         logger.info(f"Акция {symbol}: цена {price}")
                     except (KeyError, ValueError) as e:
                         logger.error(f"Ошибка извлечения цены для {symbol}: {e}")
                 else:
                     logger.warning(f"Данные по акции {symbol} не найдены в ответе API.")
             else:
-                error_msg = f'HTTP {response.status_code}: {response.text}'
+                error_msg = f"HTTP {response.status_code}: {response.text}"
                 logger.error(f"HTTP‑ошибка для {symbol}: {error_msg}")
 
         except requests.exceptions.RequestException as e:
@@ -530,7 +523,7 @@ def write_json(dict_wr: Dict[str, Any], name_file: str = "answer.json") -> None:
     file_path = os.path.join(DATA_DIR, name_file)
 
     try:
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             json.dump(dict_wr, f, ensure_ascii=False, indent=4)
         logger.info(f"Данные успешно записаны в {file_path}")
     except (IOError, OSError) as e:
