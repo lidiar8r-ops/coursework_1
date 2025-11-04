@@ -7,15 +7,14 @@ from src.config import DATA_DIR
 from src.utils import (
     conversion_to_single_currency,
     get_data_from_expensess,
-    get_data_receipt,
-    get_exchange_rate,
     get_user_settings,
+    get_stock_price_sp_500
 )
 
 logger = app_logger.get_logger("views.log")
 
 
-def events_operations(df: DataFrame, str_date: str, range_data: str = "M") -> str:
+def events_operations(df: DataFrame, str_date: str, range_data: str = "M") -> dict:
     """Реализуйте набор функций и главную функцию, принимающую на вход строку с датой и второй .
     Цифры по тратам и поступлениям округлите до целых.
     @param str_date: дата в строков виде
@@ -58,11 +57,11 @@ def events_operations(df: DataFrame, str_date: str, range_data: str = "M") -> st
         return None
 
     # формирование раздела «Расходы»:
-    result_list = get_data_from_expensess(df)
+    result_dict = get_data_from_expensess(df)
 
     # раздел «Поступления»:
     # из result_list получаем сумму поступлений по категориям и общую
-    result_list.append(get_data_receipt(df, []))
+    # result_list.append(get_data_receipt(df, []))
 
     #######
     dict_settings = get_user_settings(os.path.join(DATA_DIR, "user_settings.json"))
@@ -71,15 +70,17 @@ def events_operations(df: DataFrame, str_date: str, range_data: str = "M") -> st
         logger.error("Файл с настройками для пользователя пуст или не существует (подробнее в файле utils.log)")
     else:
         # раздел «Курс валют»:
-        data_receipt = get_data_receipt(dict_settings)
-
-        print(data_receipt)
         # раздел «Стоимость акций из S&P 500>>
-        # получаем через api данные акций (указанных в list_settings) на дату текущую
+        # list_receipt = get_stock_price_sp_500(dict_settings)
+        # result_dict["stock_prices"] = list_receipt
+
+    # получаем через api данные акций (указанных в list_settings) на дату текущую
+
+    # print(result_dict)
 
     #######
     # выводим в json файл все полученные данные по разделам
 
     # вывод в консоль об окончании отработки функции и что получен такой-то файл.json
     logger.info("Завершение работы функции")
-    return result_list
+    return result_dict

@@ -20,7 +20,7 @@ logger = app_logger.get_logger("utils.log")
 
 # Загрузка переменных из .env-файла,3
 load_dotenv()
-headers = {"apikey": os.getenv("API_KEY")}
+# headers = {"apikey": os.getenv("API_KEY")}
 # headers_sp_500 = {
 #     "apikey": os.getenv("API_KEY_SP_500"),
 # }
@@ -164,15 +164,13 @@ def filter_by_date(df: pd.DataFrame, str_date: str, range_data: str = "M") -> Da
     # return list_dict
 
 
-def get_exchange_rate(carrency_code: str, target_currency: str = "RUB", bool_prices: bool = False) -> float:
+def get_exchange_rate(carrency_code: str, target_currency: str = "RUB") -> float:
     """
     Для получения текущего курса валют
     принимает на вход название валюты, если валюта была не RUB, происходит обращение к внешнему API для получения
     текущего курса валют в рублях.
-    :param carrency_code:
-    :param target_currency:
-    :param transaction: название валюты
-    :param bool_prices: для получения цен на акции из S&P500
+    :param carrency_code: из какой валюты
+    :param target_currency: в какую валюту
     :return: сумму в рублях по курсу, тип данных —float.
     """
     carrency_code = carrency_code.upper()
@@ -180,23 +178,27 @@ def get_exchange_rate(carrency_code: str, target_currency: str = "RUB", bool_pri
         if carrency_code == target_currency:
             return 1
         else:
-            if bool_prices:  # для получения
-                # price_url = f"https://financialmodelingprep.com/v3/quote-short/AAPL?apikey={api_key_500}"
-                params_load = {"query": query, "apikey": api_key}
-                response = requests.get(url=URL_EXCHANGE_SP_500, params=params_load, headers=headers_sp_500)
+            response = requests.get(f"{URL_EXCHANGE}{os.getenv("API_KEY")}/pair/{carrency_code}/{target_currency}")
+            # response.raise_for_status()
+            # data = response.json()
+            # return {
+            #     "base": data["base"],
+            #     "rates": data["rates"],
+            #     "date": data["date"]
+            # }
 
-            else:
-                params_load = {"amount": 1, "from": carrency_code, "to": "RUB"}
-                response = requests.get(url=URL_EXCHANGE, params=params_load, headers=headers)
-                # print(response)
+            # params_load = {"amount": 1, "from": carrency_code, "to": "RUB"}
+            # response = requests.get(url=URL_EXCHANGE, params=params_load, headers=headers)
+
             if response.status_code == 200:
                 try:
-                    return float(response.json()["result"])
+                    # return float(response.json()["result"])
+                    return float(response.json()["conversion_rate"])
                 except json.decoder.JSONDecodeError as e:
                     logger.error(f"Ошибка при получении курса валюты: {e}")
                     return 0
             else:
-                print(f" Ошибка статус - код: {str(response.status_code)}")
+                logger.error(f" Ошибка статус - код: {str(response.status_code)}")
                 return 0
 
     except Exception as e:
@@ -255,7 +257,7 @@ def conversion_to_single_currency(df: pd.DataFrame, target_currency: str = "RUB"
     return df
 
 
-def get_data_from_expensess(df: pd.DataFrame) -> List[Dict]:
+def get_data_from_expensess(df: pd.DataFrame) -> Dict:
     """
     Формирование раздела «Расходы»: суммирует отрицательные значения в колонке суммы (в RUB).
 
@@ -318,18 +320,72 @@ def get_data_from_expensess(df: pd.DataFrame) -> List[Dict]:
     else:
         top_7 = sorted_list
 
-    # Формируем результат как список словарей
-    result = [
-        {
-            "expenses": {
-                "total_amount": round(sum_amount * (-1)),
-                "main": top_7,
-            }
+    # Формируем итоговый словарь
+    result = {
+        "expenses": {
+            "total_amount": round(sum_amount * (-1)),  # общая сумма расходов (положительная)
+            "main": top_7,  # топ-7 категорий + «Остальное»
         }
-    ]
+    }
 
     return result
 
+
+def get_data_from_income(df: pd.DataFrame) -> Dict:
+    """
+    Формирование раздела «Поступления»: суммирует положительные значения в колонке суммы (в RUB).
+
+    :param df: DataFrame с колонкой суммы в RUB (например, 'Сумма_RUB')
+    :return: список словарей с итоговыми поступлениями
+    """
+    # Название колонки с суммой в RUB
+    new_amount_col = f"{LIST_OPERATION[3]}_RUB"
+
+    # Проверка наличия колонки
+    if new_amount_col not in df.columns:
+        logger.error(f"Колонка '{new_amount_col}' не найдена в DataFrame")
+        # raise KeyError(f"Колонка '{new_amount_col}' не найдена в DataFrame")
+        return []
+
+    # Убедимся, что колонка — числовая
+    if not pd.api.types.is_numeric_dtype(df[new_amount_col]):
+        try:
+            df[new_amount_col] = pd.to_numeric(df[new_amount_col], errors="coerce")
+        except Exception as e:
+            logger.errorr(f"Не удалось преобразовать колонку '{new_amount_col}' в число: {e}")
+            # raise ValueError(f"Не удалось преобразовать колонку '{new_amount_col}' в число: {e}")
+            return []
+
+    # Фильтруем Положительные значения (доходы) и суммируем
+    income = df.loc[df[new_amount_col] > 0, new_amount_col]
+    sum_amount = income.sum()
+
+    # вычисляем Сумму трат по каждой категориям, т.е. получаем уникальные категории
+    unique_categories = df[df[new_amount_col] > 0][LIST_OPERATION[4]].dropna().unique()
+
+    result_list = []
+    for category in unique_categories:
+        df_category = df.loc[(df[new_amount_col] > 0) & (df[LIST_OPERATION[4]] == category), new_amount_col]
+        sum_amount_category = df_category.sum()
+        result_list.append(
+            {
+                "category": category,
+                "amount": round(sum_amount_category),
+            }
+        )
+
+    # Сортируем список по убыванию
+    sorted_list = sorted(result_list, key=lambda x: x["amount"], reverse=True)
+
+    # Формируем итоговый словарь
+    result = {
+        "income": {
+            "total_amount": round(sum_amount),  # общая сумма расходов (положительная)
+            "main": sorted_list,  # топ-7 категорий + «Остальное»
+        }
+    }
+
+    return result
 
 def get_user_settings(file_path) -> Dict:
     """"""
@@ -349,151 +405,92 @@ def get_user_settings(file_path) -> Dict:
 
     return data
 
-#
-# def get_data_receipt(dict_user) -> List[Dict]:
-#     """
-#     Функция получает через api данные курса валют (указанных в list_settings) на дату текущую
-#     и формирует сумму поступлений по категориям и общую
-#     :param dict_user:
-#     :return:  словарь, где "currency_rates" данные о курсе валют,
-#                 для каждой валюты,указанной в файле настроек пользователя
-#     """
-#     # из result_list получаем сумму поступлений по категориям и общую
-#     # for currency in dict_user["user_currencies"]:
-#         # = get_exchange_rate(carrency_code: str, target_currency: str = "currency", bool_prices: bool = False)
-#     # tickers = ["AAPL", "MSFT", "GOOGL", "TSLA"]
-#
-#     print('==='*20)
-#     params = {
-#         'function': 'GLOBAL_QUOTE',
-#         'symbol': 'APPL',  # Тикер акции
-#         'datatype': 'json',  # Формат данных
-#         "apikey": os.getenv("API_KEY_SP_500")  # Ваш API ключ
-#     }
-#
-#     # Отправляем запрос
-#     response = requests.get('https://www.alphavantage.co/query?', params=params)
-#
-#     if response.status_code == 200:
-#         data = response.json()  # Преобразуем ответ в словарь
-#         quote_data = data['Global Quote'] if 'Global Quote' in data else None
-#
-#         if quote_data is not None:
-#             print(f"Последняя цена {quote_data['symbol']}:\n"
-#                   f"{float(quote_data['price'])} USD\n"
-#                   f"Время последнего обновления: {quote_data['latest trading day']}")
-#         else:
-#             print("Ошибка в обработке данных.")
-#     else:
-#         print(f"Ошибка запроса: статус {response.status_code}, сообщение: {response.text}")
-#     return []
 
-def get_data_receipt(dict_user: Dict) -> List[Dict]:
+def get_stock_price_sp_500(dict_user: dict) -> List[Dict]:
     """
-    Функция получает через API текущие цены указанных акций.
+    Функция получает через API FMP текущие цены указанных акций.
+    Возвращает только тикер (stock) и цену (price).
 
     :param dict_user: словарь с настройками пользователя, должен содержать:
         - "user_stocks": список тикеров акций (например, ["AAPL", "MSFT"])
-    :return: список словарей с данными по каждой акции
+    :return: список словарей с полями 'stock' и 'price'
     """
     stock_data = []  # Результат: данные по акциям
 
     # Проверка API-ключа
     api_key = os.getenv("API_KEY_SP_500")
     if not api_key:
-        print("Ошибка: API_KEY_ALPHAVANTAGE не установлен в переменных окружения.")
+        logger.error("Ошибка: API_KEY_SP_500 не установлен в переменных окружения.")
         return stock_data
 
-    # Список тикеров из настроек пользователя
-    tickers = dict_user.get("user_stocks", ["AAPL", "AMZN", "GOOGL", "MSFT", "TSLA"])
-    if not tickers:
-        print("Ошибка: список акций 'user_stocks' не указан в настройках.")
+    # Список акций из настроек пользователя
+    stocks = dict_user.get("user_stocks", [])
+    if not stocks:
+        logger.error("Ошибка: список акций 'user_stocks' не указан в настройках.")
         return stock_data
 
-    # Базовый URL для запроса
-    base_url = "https://www.alphavantage.co/query"
+    for stock in stocks:
+        # Нормализуем тикер
+        symbol = stock.strip().upper()
 
-    for ticker in tickers:
         params = {
-            'function': 'GLOBAL_QUOTE',
-            'symbol': ticker.strip().upper(),  # Нормализуем тикер
+            'symbol': symbol,
             'apikey': api_key
         }
 
         try:
             response = requests.get(
-                base_url,
+                URL_EXCHANGE_SP_500,
                 params=params,
                 timeout=10
             )
 
+            # Логируем URL для отладки
+            logger.info(f"Запрос к API: {response.url}")
+
+            # Проверка HTTP‑статуса
             if response.status_code == 200:
                 data = response.json()
 
-                if 'Global Quote' in data:
-                    quote = data['Global Quote']
-                    stock_data.append({
-                        'ticker': ticker,
-                        'price': float(quote['05. price']),
-                        'open': float(quote['02. open']),
-                        'high': float(quote['03. high']),
-                        'low': float(quote['04. low']),
-                        'volume': int(quote['06. volume']),
-                        'latest_trading_day': quote['07. latest trading day'],
-                        'success': True,
-                        # Можно добавить другие поля по необходимости
-                    })
-                    print(f"Акция {ticker}: цена {quote['05. price']} USD "
-                          f"(день: {quote['07. latest trading day']})")
+                # FMP возвращает список объектов (даже для одного тикера)
+                if isinstance(data, list) and len(data) > 0:
+                    quote = data[0]  # Первый элемент списка — данные по акции
+                    try:
+                        exchange_rate = get_exchange_rate("USD")
+                        price_from = quote['price']
+                        price = round(float(price_from * exchange_rate))
+                        stock_data.append({
+                            'stock': symbol,
+                            # 'price_from': price_from,
+                            # 'exchange_rate': exchange_rate,
+                            'price': price
+                        })
+                        logger.info(f"Акция {symbol}: цена {price}")
+                    except (KeyError, ValueError) as e:
+                        logger.error(f"Ошибка извлечения цены для {symbol}: {e}")
                 else:
-                    # Акция не найдена или нет данных
-                    stock_data.append({
-                        'ticker': ticker,
-                        'price': None,
-                        'error': 'Данные не найдены в ответе API',
-                        'success': False
-                    })
-                    print(f"Данные по акции {ticker} не найдены.")
-
+                    logger.warning(f"Данные по акции {symbol} не найдены в ответе API.")
             else:
-                # HTTP-ошибка
-                stock_data.append({
-                    'ticker': ticker,
-                    'price': None,
-                    'error': f'HTTP {response.status_code}: {response.text}',
-                    'success': False
-                })
-                print(f"Ошибка API для {ticker}: статус {response.status_code}")
-
+                error_msg = f'HTTP {response.status_code}: {response.text}'
+                logger.error(f"HTTP‑ошибка для {symbol}: {error_msg}")
 
         except requests.exceptions.RequestException as e:
-            # Ошибка сети/запроса
-            stock_data.append({
-                'ticker': ticker,
-                'price': None,
-                'error': str(e),
-                'success': False
-            })
-            print(f"Ошибка запроса для {ticker}: {e}")
-
-        except (KeyError, ValueError, TypeError) as e:
-            # Ошибка парсинга данных
-            stock_data.append({
-                'ticker': ticker,
-                'price': None,
-                'error': f'Ошибка обработки данных: {str(e)}',
-                'success': False
-            })
-            print(f"Ошибка обработки данных для {ticker}: {e}")
+            logger.error(f"Ошибка запроса для {symbol}: {e}")
+        except Exception as e:
+            logger.critical(f"Неожиданная ошибка для {symbol}: {e}")
 
     return stock_data
-#
-# dict_settings = get_user_settings(os.path.join(DATA_DIR, "user_settings.json"))
+
+
+
+dict_settings = get_user_settings(os.path.join(DATA_DIR, "user_settings.json"))
+
+
 #
 # if dict_settings == {}:
 #     logger.error("Файл с настройками для пользователя пуст или не существует (подробнее в файле utils.log)")
 # else:
 #     # раздел «Курс валют»:
-#     data_receipt = get_data_receipt(dict_settings)
-
-print(get_data_receipt({}))
+#     data_receipt = get_stock_price(dict_settings)
+#
+# print(data_receipt)

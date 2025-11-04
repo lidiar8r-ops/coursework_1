@@ -36,9 +36,10 @@ LIST_OPERATION = [
     "Категория",
 ]
 
-URL_EXCHANGE = "https://api.apilayer.com/exchangerates_data/convert"
-URL_EXCHANGE_SP_500 = "https://www.alphavantage.co"
-# URL_EXCHANGE_SP_500 = "https://financialmodelingprep.com/stable/search-symbol"
+# URL_EXCHANGE = "https://api.apilayer.com/exchangerates_data/convert"
+URL_EXCHANGE = "https://v6.exchangerate-api.com/v6/"
+# URL_EXCHANGE_SP_500 = "https://www.alphavantage.co"
+URL_EXCHANGE_SP_500 = "https://financialmodelingprep.com/stable/stock-peers?"
 # URL_EXCHANGE_SP_500 = "https://financialmodelingprep.com/api/v3/quote-short/{','.join(symbols)}?apikey={api_key}""
 
 #
