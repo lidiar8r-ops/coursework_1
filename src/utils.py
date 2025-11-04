@@ -22,7 +22,7 @@ logger = app_logger.get_logger("utils.log")
 load_dotenv()
 headers = {"apikey": os.getenv("API_KEY")}
 # headers_sp_500 = {
-#     "apikey_500": os.getenv("API_KEY_SP500"),
+#     "apikey": os.getenv("API_KEY_SP_500"),
 # }
 
 
@@ -349,37 +349,151 @@ def get_user_settings(file_path) -> Dict:
 
     return data
 
+#
+# def get_data_receipt(dict_user) -> List[Dict]:
+#     """
+#     Функция получает через api данные курса валют (указанных в list_settings) на дату текущую
+#     и формирует сумму поступлений по категориям и общую
+#     :param dict_user:
+#     :return:  словарь, где "currency_rates" данные о курсе валют,
+#                 для каждой валюты,указанной в файле настроек пользователя
+#     """
+#     # из result_list получаем сумму поступлений по категориям и общую
+#     # for currency in dict_user["user_currencies"]:
+#         # = get_exchange_rate(carrency_code: str, target_currency: str = "currency", bool_prices: bool = False)
+#     # tickers = ["AAPL", "MSFT", "GOOGL", "TSLA"]
+#
+#     print('==='*20)
+#     params = {
+#         'function': 'GLOBAL_QUOTE',
+#         'symbol': 'APPL',  # Тикер акции
+#         'datatype': 'json',  # Формат данных
+#         "apikey": os.getenv("API_KEY_SP_500")  # Ваш API ключ
+#     }
+#
+#     # Отправляем запрос
+#     response = requests.get('https://www.alphavantage.co/query?', params=params)
+#
+#     if response.status_code == 200:
+#         data = response.json()  # Преобразуем ответ в словарь
+#         quote_data = data['Global Quote'] if 'Global Quote' in data else None
+#
+#         if quote_data is not None:
+#             print(f"Последняя цена {quote_data['symbol']}:\n"
+#                   f"{float(quote_data['price'])} USD\n"
+#                   f"Время последнего обновления: {quote_data['latest trading day']}")
+#         else:
+#             print("Ошибка в обработке данных.")
+#     else:
+#         print(f"Ошибка запроса: статус {response.status_code}, сообщение: {response.text}")
+#     return []
 
-def get_data_receipt(dict_user) -> List[Dict]:
+def get_data_receipt(dict_user: Dict) -> List[Dict]:
     """
-    Функция получает через api данные курса валют (указанных в list_settings) на дату текущую
-    и формирует сумму поступлений по категориям и общую
-    :param dict_user:
-    :return:  словарь, где "currency_rates" данные о курсе валют,
-                для каждой валюты,указанной в файле настроек пользователя
+    Функция получает через API текущие цены указанных акций.
+
+    :param dict_user: словарь с настройками пользователя, должен содержать:
+        - "user_stocks": список тикеров акций (например, ["AAPL", "MSFT"])
+    :return: список словарей с данными по каждой акции
     """
-    # из result_list получаем сумму поступлений по категориям и общую
-    for currency in dict_user["user_currencies"]:
-        # = get_exchange_rate(carrency_code: str, target_currency: str = "currency", bool_prices: bool = False)
-        tickers = ["AAPL", "MSFT", "GOOGL", "TSLA"]
+    stock_data = []  # Результат: данные по акциям
 
-        url = f"https://financialmodelingprep.com/api/v3/quote-short/AAPL,MSFT,GOOGL,TSLA?apikey=WPFRbddonJqfUQQfE5aBCPmQfRrSLHad"
-        response = requests.get(url)
-        response.raise_for_status()
-        data = response.json()
-        prices = {item["tickers"]: item["price"] for item in data}
+    # Проверка API-ключа
+    api_key = os.getenv("API_KEY_SP_500")
+    if not api_key:
+        print("Ошибка: API_KEY_ALPHAVANTAGE не установлен в переменных окружения.")
+        return stock_data
 
-        for symbol, price in prices.items():
-            print(f"{symbol}: {price} RUB")
-    return []
+    # Список тикеров из настроек пользователя
+    tickers = dict_user.get("user_stocks", ["AAPL", "AMZN", "GOOGL", "MSFT", "TSLA"])
+    if not tickers:
+        print("Ошибка: список акций 'user_stocks' не указан в настройках.")
+        return stock_data
+
+    # Базовый URL для запроса
+    base_url = "https://www.alphavantage.co/query"
+
+    for ticker in tickers:
+        params = {
+            'function': 'GLOBAL_QUOTE',
+            'symbol': ticker.strip().upper(),  # Нормализуем тикер
+            'apikey': api_key
+        }
+
+        try:
+            response = requests.get(
+                base_url,
+                params=params,
+                timeout=10
+            )
+
+            if response.status_code == 200:
+                data = response.json()
+
+                if 'Global Quote' in data:
+                    quote = data['Global Quote']
+                    stock_data.append({
+                        'ticker': ticker,
+                        'price': float(quote['05. price']),
+                        'open': float(quote['02. open']),
+                        'high': float(quote['03. high']),
+                        'low': float(quote['04. low']),
+                        'volume': int(quote['06. volume']),
+                        'latest_trading_day': quote['07. latest trading day'],
+                        'success': True,
+                        # Можно добавить другие поля по необходимости
+                    })
+                    print(f"Акция {ticker}: цена {quote['05. price']} USD "
+                          f"(день: {quote['07. latest trading day']})")
+                else:
+                    # Акция не найдена или нет данных
+                    stock_data.append({
+                        'ticker': ticker,
+                        'price': None,
+                        'error': 'Данные не найдены в ответе API',
+                        'success': False
+                    })
+                    print(f"Данные по акции {ticker} не найдены.")
+
+            else:
+                # HTTP-ошибка
+                stock_data.append({
+                    'ticker': ticker,
+                    'price': None,
+                    'error': f'HTTP {response.status_code}: {response.text}',
+                    'success': False
+                })
+                print(f"Ошибка API для {ticker}: статус {response.status_code}")
 
 
-dict_settings = get_user_settings(os.path.join(DATA_DIR, "user_settings.json"))
+        except requests.exceptions.RequestException as e:
+            # Ошибка сети/запроса
+            stock_data.append({
+                'ticker': ticker,
+                'price': None,
+                'error': str(e),
+                'success': False
+            })
+            print(f"Ошибка запроса для {ticker}: {e}")
 
-if dict_settings == {}:
-    logger.error("Файл с настройками для пользователя пуст или не существует (подробнее в файле utils.log)")
-else:
-    # раздел «Курс валют»:
-    data_receipt = get_data_receipt(dict_settings)
+        except (KeyError, ValueError, TypeError) as e:
+            # Ошибка парсинга данных
+            stock_data.append({
+                'ticker': ticker,
+                'price': None,
+                'error': f'Ошибка обработки данных: {str(e)}',
+                'success': False
+            })
+            print(f"Ошибка обработки данных для {ticker}: {e}")
 
-    print(data_receipt)
+    return stock_data
+#
+# dict_settings = get_user_settings(os.path.join(DATA_DIR, "user_settings.json"))
+#
+# if dict_settings == {}:
+#     logger.error("Файл с настройками для пользователя пуст или не существует (подробнее в файле utils.log)")
+# else:
+#     # раздел «Курс валют»:
+#     data_receipt = get_data_receipt(dict_settings)
+
+print(get_data_receipt({}))
