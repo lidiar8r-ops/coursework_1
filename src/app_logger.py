@@ -48,6 +48,6 @@ def get_logger(name: str) -> Logger:
 
     # Добавляем обработчики
     logger.addHandler(get_file_handler(name))
-    logger.addHandler(get_stream_handler())
+    # logger.addHandler(get_stream_handler())
 
     return logger
