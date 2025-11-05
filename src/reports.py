@@ -65,8 +65,8 @@ def spending_by_weekday(
 
         # Конвертация в RUB (если нужно)
         result_df = conversion_to_single_currency(df_filtered, "RUB")
-        if result_df is None or result_df.empty:
-            logger.error("Не удалось конвертировать суммы в RUB.")
+        if result_df.empty or result_df is None:
+            logger.error("Не удалось конвертировать суммы в RUB")
             return pd.DataFrame(columns=["день_недели", "средние_траты"])
 
         # Расчёт дня недели

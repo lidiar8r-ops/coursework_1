@@ -22,8 +22,22 @@ def test_transactions():
 @pytest.fixture(scope='module')
 def positive_test_transactions():
     dates = ['2023-09-01', '2023-09-02', '2023-09-03', '2023-09-04',
-    '2023-09-01', '2023-09-15', '2023-10-01', '2025-10-15']
-    amounts = [100, 200, 300, 400, 500, 600, 700, -800]
+    '2025-09-01', '2025-09-15', '2025-10-01', '2025-10-15']
+    amounts = [100, 200, 300, 400, -500, -600, -700, -800]
+    currencies = ['RUB'] * len(dates)
+    df = pd.DataFrame({
+        'Дата платежа': pd.to_datetime(dates),
+        'Сумма платежа': amounts,
+        'Сумма платежа_RUB': amounts,
+        'Валюта': currencies
+    })
+    return df
+
+
+@pytest.fixture(scope='module')
+def positive_test_transactions_sum():
+    dates = ['2023-09-01', '2023-09-02', '2023-09-03', '2023-09-04',]
+    amounts = [100, 200, 300, 400,]
     currencies = ['USD'] * len(dates)
     df = pd.DataFrame({
         'Дата платежа': pd.to_datetime(dates),
