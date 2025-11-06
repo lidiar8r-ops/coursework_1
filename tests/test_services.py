@@ -56,3 +56,29 @@ def test_negative_cashback(sample_data):
         result = get_profitable_cashback(modified_data, "2025", "01")
         expected = {'Одежда': 300.0, 'Продукты': 50.0, 'Развлечения': 200.0}
         assert result == expected, f"Негативные значения кэшбэка игнорируются. Получили: {result}"
+
+
+#  проверка обработки даты платежа вызвать исключение
+@patch("pandas.to_datetime", side_effect=ValueError("Некорректный формат даты"))  # Моделируем ошибку преобразования
+def test_unexpected_exception_returns_df(mock_to_datetime, sample_data):
+    """
+    Тестируем обработку неправильного формата даты при вызове функции get_profitable_cashback.
+    Ожидаемый результат — пустой словарь {} при ошибке преобразования.
+    """
+    # Применяем нашу функцию с неправильными данными
+    result = get_profitable_cashback(sample_data, "0001", "9")
+
+    # Проверяем результат
+    assert isinstance(result, dict), "Результат должен быть экземпляром класса dict"
+    assert len(result) == 0, "Результат должен быть пустым словарем"
+
+
+# Тест на возникновение ошибки при записи в файл
+def test_write_json_failure(sample_data):
+    """
+    Тест на возникновение ошибки при записи в файл.
+    """
+    # Патч для функции write_json, чтобы симулировать ошибку
+    with patch("src.services.write_json", side_effect=Exception("Искусственная ошибка записи в файл")):
+        with pytest.raises(Exception):
+            get_profitable_cashback(sample_data, "2025", "01")
