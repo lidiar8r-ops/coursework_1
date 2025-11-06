@@ -45,12 +45,12 @@ def test_events_operations_no_data():
     assert result == "Нет данных в файле", "Должно быть сообщение об ошибке"
 
 # Тест на обработку ошибки при некорректном типе данных
-def test_events_operations_incorrect_type(sample_transactions):
+def test_events_operations_incorrect_type(faulty_data):
     """
     Тест на обработку ошибки при некорректном типе данных.
     """
     # Запускаем функцию с некорректным типом данных
-    result = events_operations(sample_transactions, "2025-01-01")
+    result = events_operations(faulty_data, "2025-01-01")
 
     # Проверяем, что результат содержит сообщение об ошибке
     assert result is None, "Должно быть сообщение об ошибке"

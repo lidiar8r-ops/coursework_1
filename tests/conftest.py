@@ -12,6 +12,14 @@ def test_transactions():
     })
 
 
+@pytest.fixture
+def faulty_data():
+    return pd.DataFrame({
+        "Дата платежа": ["2025-33-01", "2025-01-02"],
+        "Кэшбэк": [100, 200],
+        "Категория": ["Продукты", "\udcff"]  # Некорректное значение (нечитаемый символ)
+    })
+
 
 @pytest.fixture(scope="module")
 def positive_test_transactions():
