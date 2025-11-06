@@ -1,35 +1,3 @@
 {
-    "income": {},
-    "currency_rates": [
-        {
-            "currency": "USD",
-            "rate": 81.2203
-        },
-        {
-            "currency": "EUR",
-            "rate": 93.4094
-        }
-    ],
-    "stock_prices": [
-        {
-            "stock": "AAPL",
-            "price": 443
-        },
-        {
-            "stock": "AMZN",
-            "price": 13556
-        },
-        {
-            "stock": "GOOGL",
-            "price": 22101
-        },
-        {
-            "stock": "MSFT",
-            "price": 22101
-        },
-        {
-            "stock": "TSLA",
-            "price": 237
-        }
-    ]
+    "income": {}
 }
