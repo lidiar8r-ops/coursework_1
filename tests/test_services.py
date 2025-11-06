@@ -80,5 +80,9 @@ def test_write_json_failure(sample_data):
     """
     # Патч для функции write_json, чтобы симулировать ошибку
     with patch("src.services.write_json", side_effect=Exception("Искусственная ошибка записи в файл")):
-        with pytest.raises(Exception):
-            get_profitable_cashback(sample_data, "2025", "01")
+        with patch("src.services.logger.critical") as mock_critical:
+            with pytest.raises(Exception):
+                get_profitable_cashback(sample_data, "2025", "01")
+
+            # Проверка вызова метода critical
+            mock_critical.assert_called_once()
