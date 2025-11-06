@@ -71,7 +71,8 @@ def test_conversion_failure(mocked_function,sample_transactions):
     assert result.empty, "DataFrame должен быть пустым."
     expected_columns = ["день_недели", "средние_траты"]
     assert list(
-        result.columns) == expected_columns, f"Структура столбцов должна соответствовать {expected_columns}. Фактическое значение: {result.columns}"
+        result.columns) == expected_columns, \
+        f"Структура столбцов должна соответствовать {expected_columns}. Фактическое значение: {result.columns}"
 
 
 def test_weekday_calculation():

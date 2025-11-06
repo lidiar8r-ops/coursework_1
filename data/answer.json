@@ -1,14 +1,5 @@
 {
-    "expenses": {
-        "total_amount": 0,
-        "main": []
-    },
-    "income": {
-        "income": {
-            "total_amount": 0,
-            "main": []
-        }
-    },
+    "income": {},
     "currency_rates": [
         {
             "currency": "USD",
@@ -26,19 +17,19 @@
         },
         {
             "stock": "AMZN",
-            "price": 13526
+            "price": 13556
         },
         {
             "stock": "GOOGL",
-            "price": 22025
+            "price": 22101
         },
         {
             "stock": "MSFT",
-            "price": 22025
+            "price": 22101
         },
         {
             "stock": "TSLA",
-            "price": 229
+            "price": 237
         }
     ]
 }

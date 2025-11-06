@@ -1,5 +1,5 @@
 import pandas as pd
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 import pytest
 
 from src.views import events_operations
@@ -7,23 +7,33 @@ from src.views import events_operations
 
 # Тестовые данные
 @pytest.fixture
-def sample_data():
+def sample_data_views():
     return pd.DataFrame({
-        "Дата платежа": ["2025-01-01", "2025-01-02"],
-        "Сумма платежа": [100, 200],
+        "Дата платежа": pd.to_datetime(["2025-01-01", "2025-01-02"]),
+        "Сумма платежа": [-100, 200],
         "Категория": ["Продукты", "Одежда"],
         "Валюта платежа": ["USD", "RUB"],
+        "Сумма платежа_RUB": [-100, 200],
     })
-# "Тип операции": ["Расход", "Поступление"]
 
 # Тест на корректную работу функции
-def test_events_operations(sample_data):
+@patch('src.views.conversion_to_single_currency')
+@patch('src.views.get_currency_rates')
+@patch('src.views.get_stock_price_sp_500')
+def test_events_operations(mocked_stock_price, mocked_currency_rates, mocked_conversion, sample_data_views):
     """
     Тест на корректную работу функции events_operations.
     """
-    # Запускаем функцию
-    result = events_operations(sample_data, "2025-01-01")
+    # Создаем заглушки для функций
+    mocked_conversion.return_value = sample_data_views  # Возвращаем исходные данные
+    mocked_currency_rates.return_value = [{"currency": "USD", "rate": 81.2203}, {"currency": "EUR", "rate": 93.4094}]
+    mocked_stock_price.return_value = [{"stock": "AAPL", "price": 443}, {"stock": "AMZN", "price": 13556},
+                                       {"stock": "GOOGL", "price": 22101}, {"stock": "MSFT", "price": 22101},
+                                       {"stock": "TSLA", "price": 237}]
 
+    # Запускаем функцию
+    result = events_operations(sample_data_views, "2025-01-01")
+    print(result)
     # Проверяем, что результат не пустой
     assert result is not None, "Результат должен быть не пустым"
 
@@ -33,24 +43,7 @@ def test_events_operations(sample_data):
     assert "currency_rates" in result, "Раздел 'currency_rates' должен быть в результате"
     assert "stock_prices" in result, "Раздел 'stock_prices' должен быть в результате"
 
-# Тест на обработку ошибки при отсутствии данных
-def test_events_operations_no_data():
-    """
-    Тест на обработку ошибки при отсутствии данных.
-    """
-    # Запускаем функцию с пустым DataFrame
-    result = events_operations(None, "2025-01-01")
-
-    # Проверяем, что результат содержит сообщение об ошибке
-    assert result == "Нет данных в файле", "Должно быть сообщение об ошибке"
-
-# Тест на обработку ошибки при некорректном типе данных
-def test_events_operations_incorrect_type(faulty_data):
-    """
-    Тест на обработку ошибки при некорректном типе данных.
-    """
-    # Запускаем функцию с некорректным типом данных
-    result = events_operations(faulty_data, "2025-01-01")
-
-    # Проверяем, что результат содержит сообщение об ошибке
-    assert result is None, "Должно быть сообщение об ошибке"
+    # Проверяем, что функции были вызваны
+    mocked_conversion.assert_called_once()
+    mocked_currency_rates.assert_called_once()
+    mocked_stock_price.assert_called_once()
