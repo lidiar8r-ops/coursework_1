@@ -36,8 +36,8 @@ def test_zero_cashback(sample_data):
 def test_invalid_year_or_month(sample_data):
     """Тестирование реакции на неправильный формат года или месяца."""
     with patch('src.services.app_logger'):
-        with pytest.raises(ValueError):
-            get_profitable_cashback(sample_data, "abc", "11")
+        # with pytest.raises(ValueError):
+        assert get_profitable_cashback(sample_data, "abc", "11") == {}
 
 
 def test_empty_dataframe():
@@ -81,8 +81,8 @@ def test_write_json_failure(sample_data):
     # Патч для функции write_json, чтобы симулировать ошибку
     with patch("src.services.write_json", side_effect=Exception("Искусственная ошибка записи в файл")):
         with patch("src.services.logger.critical") as mock_critical:
-            with pytest.raises(Exception):
-                get_profitable_cashback(sample_data, "2025", "01")
+            # with pytest.raises(Exception):
+            assert get_profitable_cashback(sample_data, "2025", "01") == {}
 
             # Проверка вызова метода critical
             mock_critical.assert_called_once()

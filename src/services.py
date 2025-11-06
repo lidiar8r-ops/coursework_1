@@ -75,8 +75,8 @@ def get_profitable_cashback(data: DataFrame, str_year: str, str_month: str) -> D
 
     except (ValueError, KeyError, TypeError) as e:
         logger.error(f"Ошибка при анализе кэшбэка: {type(e).__name__}: {e}")
-        raise e
+        return {}
 
     except Exception as e:
         logger.critical(f"Неожиданная ошибка в get_profitable_cashback: {e}")
-        raise e
+        return {}
