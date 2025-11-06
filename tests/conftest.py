@@ -2,85 +2,44 @@ from unittest.mock import patch
 
 import pytest
 import pandas as pd
-
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def test_transactions():
-    dates = [
-        '2023-07-01', '2023-07-15', '2023-08-01', '2023-08-15',
-        '2023-09-01', '2023-09-15', '2023-10-01', '2023-10-15'
-    ]
-    amounts = [-100, -200, -300, -400, -500, -600, -700, -800]
-    currencies = ['USD', 'EUR', 'RUB', 'GBP', 'USD', 'EUR', 'RUB', 'GBP']
-    df = pd.DataFrame({
-        'Дата платежа': pd.to_datetime(dates),
-        'Сумма': amounts,
-        'Валюта': currencies
+    return pd.DataFrame({
+        "Дата платежа": pd.to_datetime(["2023-09-01", "2023-09-02"]),
+        "Сумма платежа": [-100, -200],
+        "Сумма платежа_RUB": [-100, -200],
+        "Валюта платежа": ["RUB", "RUB"]
     })
-    return df
 
 
-@pytest.fixture(scope='module')
+
+@pytest.fixture(scope="module")
 def positive_test_transactions():
-    dates = ['2023-09-01', '2023-09-02', '2023-09-03', '2023-09-04',
-    '2025-09-01', '2025-09-15', '2025-10-01', '2025-10-15']
-    amounts = [100, 200, 300, 400, -500, -600, -700, -800]
-    currencies = ['RUB'] * len(dates)
-    df = pd.DataFrame({
-        'Дата платежа': pd.to_datetime(dates),
-        'Сумма платежа': amounts,
-        'Сумма платежа_RUB': amounts,
-        'Валюта': currencies
+    return pd.DataFrame({
+        "Дата платежа": pd.to_datetime(["2023-09-01"]),
+        "Сумма платежа": [-100],
+        "Сумма платежа_RUB": [-100],
+        "Валюта платежа": ["RUB"]
     })
-    return df
 
-
-@pytest.fixture(scope='module')
-def positive_test_transactions_sum():
-    dates = ['2023-09-01', '2023-09-02', '2023-09-03', '2023-09-04',]
-    amounts = [100, 200, 300, 400,]
-    currencies = ['USD'] * len(dates)
-    df = pd.DataFrame({
-        'Дата платежа': pd.to_datetime(dates),
-        'Сумма': amounts,
-        'Валюта': currencies
-    })
-    return df
-
-
-
-# Фиктивные данные для тестов
 @pytest.fixture
 def sample_transactions():
     return pd.DataFrame({
-        "Дата платежа": pd.to_datetime([
-            "2023-10-01",  # воскресенье
-            "2023-10-02",  # понедельник
-            "2023-10-05",  # четверг
-            "2023-11-15",  # среда
-            "2023-12-20",  # вторник
-        ]),
-        "Сумма": [-1000, -2000, -1500, -3000, -2500],
-        "Сумма_RUB": [-1000, -2000, -1500, -3000, -2500],
+        "Дата платежа": ["01.09.2025"],
+        "Сумма платежа": [-1000],
+        "Сумма платежа_RUB": [-1000],
+        "Валюта платежа": ["USD"]
     })
 
-@pytest.fixture
-def mock_logger():
-    with patch("src.app_logger.get_logger") as mock:
-        logger = MagicMock()
-        mock.return_value = logger
-        yield logger
 
 @pytest.fixture
-def mock_filter_by_date():
-    with patch("src.utils.filter_by_date") as mock:
-        yield mock
-
-@pytest.fixture
-def mock_conversion():
-    with patch("src.utils.conversion_to_single_currency") as mock:
-        yield mock
-
-@pytest.fixture
-def mock_write_json():
-    with patch("src.utils.write_json") as mock:
-        yield mock
+def sample_data():
+    """Фикстура: тестовые данные."""
+    return pd.DataFrame({
+        "Дата платежа": [
+            "01.01.2025", "15.01.2025", "05.02.2025",
+            "10.01.2025", "20.01.2025"
+        ],
+        "Кэшбэк": [100.5, 200.3, 0, 50.2, 300.0],
+        "Категория": ["Продукты", "Развлечения", "Транспорт", "Продукты", "Одежда"]
+    })
