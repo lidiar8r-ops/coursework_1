@@ -4,13 +4,19 @@ from unittest.mock import patch, Mock
 from src.services import get_profitable_cashback
 
 
-def test_valid_input(sample_data):
-    """Тестирование обычной работы функции."""
-    with patch('src.services.app_logger') as mock_logger:
-        result = get_profitable_cashback(sample_data, "2025", "01")
-        expected = {'Одежда': 300.0, 'Продукты': 151.0, 'Развлечения': 200.0}
-        assert result == expected, f"Неправильная обработка валидных данных. Получили: {result}"
-        mock_logger.get_logger.return_value.info.assert_called()
+@patch('src.services.write_json')
+@patch('src.services.logger')
+def test_valid_input(mock_logger, mock_write_json, sample_data):
+    """Тестирование нормальной работы функции."""
+    # Запускаем тестируемую функцию
+    result = get_profitable_cashback(sample_data, "2025", "01")
+
+    # Проверяем, что функция возвращает верный результат
+    expected = {'Одежда': 300.0, 'Продукты': 151.0, 'Развлечения': 200.0}
+    assert result == expected, f"Неправильный результат обработки данных."
+
+    # Проверяем, что логгер вызвал метод info хотя бы один раз
+    mock_logger.info.assert_called()
 
 
 def test_no_transactions_in_period(sample_data):
