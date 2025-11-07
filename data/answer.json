@@ -1,3 +1,90 @@
 {
-    "income": {}
+    "expenses": {
+        "total_amount": 196267,
+        "main": [
+            {
+                "category": "Переводы",
+                "amount": 75806
+            },
+            {
+                "category": "Супермаркеты",
+                "amount": 34379
+            },
+            {
+                "category": "Другое",
+                "amount": 33138
+            },
+            {
+                "category": "Аптеки",
+                "amount": 11506
+            },
+            {
+                "category": "Связь",
+                "amount": 7390
+            },
+            {
+                "category": "Фастфуд",
+                "amount": 6198
+            },
+            {
+                "category": "Транспорт",
+                "amount": 5900
+            },
+            {
+                "category": "Остальное",
+                "amount": 21951
+            }
+        ]
+    },
+    "income": {
+        "income": {
+            "total_amount": 109309,
+            "main": [
+                {
+                    "category": "Переводы",
+                    "amount": 74256
+                },
+                {
+                    "category": "Пополнения",
+                    "amount": 28880
+                },
+                {
+                    "category": "Бонусы",
+                    "amount": 5068
+                },
+                {
+                    "category": "Ж/д билеты",
+                    "amount": 1105
+                }
+            ]
+        }
+    },
+    "currency_rates": [
+        {
+            "currency": "USD",
+            "rate": 81.2356
+        },
+        {
+            "currency": "EUR",
+            "rate": 93.7594
+        }
+    ],
+    "stock_prices": [
+        {
+            "stock": "AAPL",
+            "price": 415
+        },
+        {
+            "stock": "AMZN",
+            "price": 13172
+        },
+        {
+            "stock": "GOOGL",
+            "price": 21822
+        },
+        {
+            "stock": "TSLA",
+            "price": 206
+        }
+    ]
 }

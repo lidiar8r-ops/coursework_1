@@ -5,7 +5,7 @@ import pandas as pd
 
 from src import app_logger
 from src.config import DATA_DIR, LIST_OPERATION
-from src.reports import spending_by_weekday
+from src.reports import spending_by_weekday, decorator_write_with_args
 from src.services import get_profitable_cashback
 from src.utils import get_list_operation
 from src.views import events_operations
@@ -49,7 +49,8 @@ if __name__ == '__main__':
         print(json.dumps(result, indent=4, ensure_ascii=False))
 
         print("=" * 20, "Траты по дням недели:")
-        result = spending_by_weekday(df,"01.01.2022")
+        @decorator_write_with_args("reports_decorator.json")
+        spending_by_weekday(df,"01.01.2022")
         print(json.dumps(result.to_dict('records'), indent=4, ensure_ascii=False))
 
     print("Завершение работы программы")

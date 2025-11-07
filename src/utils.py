@@ -181,7 +181,7 @@ def get_exchange_rate(carrency_code: str, target_currency: str = "RUB") -> float
         if carrency_code == target_currency:
             return 1
         else:
-            response = requests.get(f"{URL_EXCHANGE}{os.getenv('API_KEY')}/pair/{carrency_code}/{target_currency}")
+            response = requests.get(f"{URL_EXCHANGE}{os.getenv(API_KEY)}/pair/{carrency_code}/{target_currency}")
             # response.raise_for_status()
             # data = response.json()
             # return {

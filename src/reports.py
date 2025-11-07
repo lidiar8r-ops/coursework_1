@@ -9,6 +9,26 @@ from src.utils import conversion_to_single_currency, filter_by_date, write_json
 # Настройка логирования
 logger = app_logger.get_logger("reports.log")
 
+def decorator_write_with_args(arg1):
+    def my_decorator(func):
+        def wrapper(*args, **kwargs):
+            print(f"Аргументы декоратора: {arg1}, {arg2}")
+            result = func(*args, **kwargs)
+            if arg1 is None:
+                file_name = "reports.json"
+            else:
+                file_name = arg1
+            # Преобразование в словарь (исправленный orient)
+            result_dict = result.to_dict(orient="records")
+
+            # Запись результата в JSON
+            write_json(result_dict, file_name)
+            loger(f"Запись результатов в {file_name}")
+
+            return result
+        return wrapper
+    return my_decorator
+
 
 def spending_by_weekday(
     transactions: pd.DataFrame,
@@ -99,12 +119,6 @@ def spending_by_weekday(
 
         # Явное указание типа (для mypy)
         result_dataframe: pd.DataFrame = avg_spending.copy()
-
-        # Преобразование в словарь (исправленный orient)
-        result_dict = result_dataframe.to_dict(orient="records")
-
-        # Запись результата в JSON
-        write_json(result_dict, "reports.json")
 
         return result_dataframe
 
