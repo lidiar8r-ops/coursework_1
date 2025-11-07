@@ -181,7 +181,7 @@ def get_exchange_rate(carrency_code: str, target_currency: str = "RUB") -> float
         if carrency_code == target_currency:
             return 1
         else:
-            response = requests.get(f"{URL_EXCHANGE}{os.getenv("API_KEY")}/pair/{carrency_code}/{target_currency}")
+            response = requests.get(f"{URL_EXCHANGE}{os.getenv('API_KEY')}/pair/{carrency_code}/{target_currency}")
             # response.raise_for_status()
             # data = response.json()
             # return {
@@ -224,11 +224,11 @@ def conversion_to_single_currency(df: pd.DataFrame, target_currency: str = "RUB"
 
     # Убедимся, что сумма — числовая
     if not pd.api.types.is_numeric_dtype(df[amount_col]):
-        try:
-            df[amount_col] = pd.to_numeric(df[amount_col], errors="coerce")
-        except Exception as e:
-            logger.error(f"Не удалось преобразовать столбец '{amount_col}' в число: {e}")
-            return pd.DataFrame()
+        # try:
+        df[amount_col] = pd.to_numeric(df[amount_col], errors="coerce")
+        # except Exception as e:
+        #     logger.error(f"Не удалось преобразовать столбец '{amount_col}' в число: {e}")
+        #     return pd.DataFrame()
 
     # Создаём новый столбец для сумм  (dropna() исключает строки без указанной валюты)
     new_amount_col = f"{amount_col}_{target_currency}"
@@ -281,12 +281,12 @@ def get_data_from_expensess(df: pd.DataFrame) -> Dict:
 
     # Убедимся, что колонка — числовая
     if not pd.api.types.is_numeric_dtype(df[new_amount_col]):
-        try:
-            df[new_amount_col] = pd.to_numeric(df[new_amount_col], errors="coerce")
-        except Exception as e:
-            logger.error(f"Не удалось преобразовать колонку '{new_amount_col}' в число: {e}")
-            # raise ValueError(f"Не удалось преобразовать колонку '{new_amount_col}' в число: {e}")
-            return {}
+        # try:
+        df[new_amount_col] = pd.to_numeric(df[new_amount_col], errors="coerce")
+        # except Exception as e:
+        #     logger.error(f"Не удалось преобразовать колонку '{new_amount_col}' в число: {e}")
+        #     # raise ValueError(f"Не удалось преобразовать колонку '{new_amount_col}' в число: {e}")
+        #     return {}
 
     # Фильтруем отрицательные значения (расходы) и суммируем
     expenses = df.loc[df[new_amount_col] < 0, new_amount_col]
@@ -355,12 +355,12 @@ def get_data_from_income(df: pd.DataFrame) -> Dict:
 
     # Убедимся, что колонка — числовая
     if not pd.api.types.is_numeric_dtype(df[new_amount_col]):
-        try:
-            df[new_amount_col] = pd.to_numeric(df[new_amount_col], errors="coerce")
-        except Exception as e:
-            logger.error(f"Не удалось преобразовать колонку '{new_amount_col}' в число: {e}")
-            # raise ValueError(f"Не удалось преобразовать колонку '{new_amount_col}' в число: {e}")
-            return {}
+        # try:
+        df[new_amount_col] = pd.to_numeric(df[new_amount_col], errors="coerce")
+        # except Exception as e:
+        #     logger.error(f"Не удалось преобразовать колонку '{new_amount_col}' в число: {e}")
+        #     # raise ValueError(f"Не удалось преобразовать колонку '{new_amount_col}' в число: {e}")
+        #     return {}
 
     # Фильтруем Положительные значения (доходы) и суммируем
     income = df.loc[df[new_amount_col] > 0, new_amount_col]

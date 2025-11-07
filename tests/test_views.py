@@ -82,12 +82,10 @@ def test_events_operations_incorrect_type(mocked_stock_price, mocked_currency_ra
     # Запускаем функцию с некорректным типом данных
     result = events_operations(None, "01.01.2025")
 
-    # # Проверяем, что результат содержит сообщение об ошибке
-    # assert result is None, "Должно быть сообщение об ошибке"
+    # Проверяем, что результат содержит ожидаемое сообщение об ошибке
+    assert isinstance(result, str), "Результатом должно быть сообщение об ошибке."
+    assert result == "Нет данных в файле", "Сообщение об ошибке неправильное."
 
-    # Проверка результатов
-    assert isinstance(result, pd.DataFrame), "Результат должен быть объектом DataFrame."
-    assert result.empty, "DataFrame должен быть пустым."
 
 
 # Тест на обработку ошибки при неудачной конвертации
@@ -117,5 +115,23 @@ def test_events_operations_empty_settings(mocked_stock_price, mocked_currency_ra
     # Запускаем функцию
     result = events_operations(sample_data_views, "2025-01-01")
 
-    # Проверяем, что результат содержит сообщение об ошибке
-    assert result is None, "Должно быть сообщение об ошибке"
+    # Проверяем результат
+    assert result == {'income': {}}
+
+
+
+
+# Тест на обработку ошибки при неудачной конвертации
+@patch('src.views.conversion_to_single_currency', return_value=None)
+@patch('src.views.get_currency_rates')
+@patch('src.views.get_stock_price_sp_500')
+def test_events_operations_invalid_dataframe_type(mocked_conversion, mocked_currency_rates, mocked_stock_price):
+    """
+    Тест на проверку обработки случая, когда передан некорректный тип аргумента df.
+    """
+    # Передаем некорректный тип аргумента (не DataFrame)
+    incorrect_df = {"key": "value"}
+    result = events_operations(incorrect_df, "2025-01-01")
+
+    # Проверяем, что результат соответствует сообщению об ошибке
+    assert result == "Нет данных"

@@ -1,150 +1,406 @@
-# import os
-# import json
-# import pytest
-# import responses
-# import pandas as pd
-# from src.utils import *
-# from src.config import DATA_DIR, LIST_OPERATION, URL_EXCHANGE, URL_EXCHANGE_SP_500
-#
-# # Установим временный каталог для тестов
-# TEST_DATA_DIR = "./tests/data/"
-# os.makedirs(TEST_DATA_DIR, exist_ok=True)
-#
-# # Вспомогательная фикстура для удаления временных файлов после тестов
-# @pytest.fixture(autouse=True)
-# def cleanup():
-#     yield
-#     shutil.rmtree(TEST_DATA_DIR, ignore_errors=True)
-#
-# # -------------------------------------------------------------
-# # Тесты на базовые функции логики приложения
-# # -------------------------------------------------------------
-#
-# def test_get_list_operation():
-#     """Проверяет чтение и фильтрацию данных из файла"""
-#     path_filename = TEST_DATA_DIR + "sample.csv"
-#     df = pd.DataFrame({
-#         "Название": ["Операция 1", "Операция 2"],
-#         "Категория": ["Оплата", "Доход"],
-#         "Сумма": [-100, 200],
-#         "Валюта": ["RUB", "USD"],
-#         "Дата оплаты": ["2023-01-01", "2023-01-02"],
-#         "Статус": ["OK", "OK"]
-#     })
-#     df.to_csv(path_filename, index=False)
-#
-#     result_df = get_list_operation(path_filename, LIST_OPERATION)
-#     assert isinstance(result_df, pd.DataFrame)
-#     assert len(result_df) == 2  # обе операции ОК
-#
-#
-# def test_get_period_operation():
-#     """Проверяет получение интервала дат по разным критериям"""
-#     cases = [
-#         ("2023-01-01", "W", [datetime(2022, 12, 26), datetime(2023, 1, 2)]),
-#         ("2023-01-01", "M", [datetime(2023, 1, 1), datetime(2023, 1, 2)]),
-#         ("2023-01-01", "Y", [datetime(2023, 1, 1), datetime(2023, 1, 2)])
-#     ]
-#     for case in cases:
-#         period = get_period_operation(case[0], case[1])
-#         assert isinstance(period, list)
-#         assert len(period) == 2
-#         assert period == case[2]
-#
-#
-# def test_filter_by_date():
-#     """Проверяет фильтрацию данных по датам"""
-#     df = pd.DataFrame({
-#         "Дата платежа": ["2023-01-01", "2023-01-02", "2023-01-03"],
-#         "Сумма": [-100, 200, -50]
-#     })
-#     df["Дата платежа"] = pd.to_datetime(df["Дата платежа"])
-#
-#     list_period = [datetime(2023, 1, 1), datetime(2023, 1, 3)]
-#     filtered_df = filter_by_date(df, list_period)
-#     assert isinstance(filtered_df, pd.DataFrame)
-#     assert len(filtered_df) == 3  # все данные попали в фильтр
-#
-#
-# def test_get_exchange_rate():
-#     """Имитация внешнего сервиса для проверки получения курса валют"""
-#     with responses.RequestsMock() as rsps:
-#         rsps.add(responses.GET, URL_EXCHANGE, json={"conversion_rate": 75.0}, status=200)
-#         rate = get_exchange_rate("USD")
-#         assert rate == 75.0
-#
-#
-# def test_conversion_to_single_currency():
-#     """Проверяет конвертацию валют"""
-#     df = pd.DataFrame({
-#         "Код валюты": ["USD", "EUR", "RUB"],
-#         "Сумма": [100, 200, 300]
-#     })
-#     converted_df = conversion_to_single_currency(df)
-#     assert isinstance(converted_df, pd.DataFrame)
-#     assert "Сумма_RUB" in converted_df.columns
-#
-#
-# def test_get_data_from_expensess():
-#     """Проверяет формирование отчёта по расходам"""
-#     df = pd.DataFrame({
-#         "Сумма_RUB": [-100, -200, -50],
-#         "Категория": ["Еда", "Транспорт", "Связь"]
-#     })
-#     report = get_data_from_expensess(df)
-#     assert isinstance(report, dict)
-#     assert "expenses" in report.keys()
-#
-#
-# def test_get_data_from_income():
-#     """Проверяет формирование отчёта по доходам"""
-#     df = pd.DataFrame({
-#         "Сумма_RUB": [100, 200, 50],
-#         "Категория": ["Зарплата", "Продажа", "Проценты"]
-#     })
-#     report = get_data_from_income(df)
-#     assert isinstance(report, dict)
-#     assert "income" in report.keys()
-#
-#
-# # -------------------------------------------------------------
-# # Интеграционные тесты
-# # -------------------------------------------------------------
-#
-# def test_get_user_settings():
-#     """Проверяет загрузку настроек пользователя"""
-#     settings_file = TEST_DATA_DIR + "settings.json"
-#     user_settings = {"user_currencies": ["USD", "EUR"]}
-#     with open(settings_file, "w") as f:
-#         json.dump(user_settings, f)
-#
-#     loaded_settings = get_user_settings(settings_file)
-#     assert isinstance(loaded_settings, dict)
-#     assert "user_currencies" in loaded_settings.keys()
-#
-#
-# def test_get_currency_rates():
-#     """Имитация загрузки курсов валют"""
-#     with responses.RequestsMock() as rsps:
-#         rsps.add(responses.GET, URL_EXCHANGE, json={"conversion_rate": 75.0}, status=200)
-#         rates = get_currency_rates({"user_currencies": ["USD"]})
-#         assert isinstance(rates, list)
-#         assert len(rates) == 1
-#         assert rates[0]["currency"] == "USD"
-#
-#
-# def test_get_stock_price_sp_500():
-#     """Имитация загрузки текущих цен акций SP500"""
-#     with responses.RequestsMock() as rsps:
-#         rsps.add(responses.GET, URL_EXCHANGE_SP_500, json=[{"symbol": "AAPL", "price": 150}], status=200)
-#         prices = get_stock_price_sp_500({"user_stocks": ["AAPL"]})
-#         assert isinstance(prices, list)
-#         assert len(prices) == 1
-#         assert prices[0]["stock"] == "AAPL"
-#
-#
-# def test_write_json():
-#     """Проверяет запись данных в JSON-файл"""
-#     data = {"key": "value"}
-#     write_json(data, "test_answer.json")
-#     assert os.path.exists(TEST_DATA_DIR + "test_answer.json")
+import json
+import logging
+import os
+import shutil
+import tempfile
+import pytest
+import pandas as pd
+from datetime import datetime
+from datetime import date
+from unittest.mock import patch
+from src.utils import (
+    get_list_operation,
+    get_period_operation,
+    filter_by_date,
+    get_exchange_rate,
+    conversion_to_single_currency,
+    get_data_from_expensess,
+    get_data_from_income,
+    get_user_settings,
+    get_currency_rates,
+    get_stock_price_sp_500,
+    write_json
+)
+
+
+# Подготовим временные папки и тестовые файлы
+TEST_DATA_DIR = tempfile.mkdtemp(prefix="test_data_")
+DATA_FILE_PATH = os.path.join(TEST_DATA_DIR, "test_data.xlsx")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def cleanup(request):
+    request.addfinalizer(lambda: shutil.rmtree(TEST_DATA_DIR))
+
+
+# Тестируем функцию get_list_operation
+def test_get_list_operation_existing_file():
+    df_expected = pd.DataFrame([{"Название": "Test", "Сумма платежа": 100}], columns=["Название", "Сумма платежа"])
+    df_expected.to_excel(DATA_FILE_PATH, index=False)
+    result = get_list_operation(DATA_FILE_PATH, ["Название", "Сумма платежа"])
+    assert isinstance(result, pd.DataFrame)
+    assert not result.empty
+
+
+def test_get_list_operation_nonexistent_file():
+    nonexistent_path = os.path.join(TEST_DATA_DIR, "nonexistent.xls")
+    result = get_list_operation(nonexistent_path, ["Название", "Сумма платежа"])
+    assert isinstance(result, pd.DataFrame)
+    assert result.empty
+
+
+def test_get_list_operation_wrong_format():
+    wrong_format_path = os.path.join(TEST_DATA_DIR, "wrong.txt")
+    with open(wrong_format_path, "w") as f:
+        f.write("Test")
+    result = get_list_operation(wrong_format_path, ["Название", "Сумма платежа"])
+    assert isinstance(result, pd.DataFrame)
+    assert result.empty
+
+
+def test_get_list_operation_csv():
+    # Создаем временный CSV-файл с известными данными
+    df_test = pd.DataFrame({
+        "Название": ["Продукт А", "Продукт B"],
+        "Цена": [100, 200],
+        "Статус": ["OK", "OK"]
+    })
+
+    # Создаем временный файл CSV
+    _, temp_csv_path = tempfile.mkstemp(suffix=".csv")
+    df_test.to_csv(temp_csv_path, index=False)
+
+    # Определяем список необходимых колонок
+    required_columns = ["Название", "Цена", "Статус"]
+
+    # Читаем данные с помощью get_list_operation
+    result_df = get_list_operation(temp_csv_path, required_columns)
+
+    # Проверяем, что получили верный DataFrame
+    assert isinstance(result_df, pd.DataFrame)
+    assert len(result_df) == 2  # Две строки в исходном DataFrame
+    assert result_df.equals(df_test)  # Проверяем точное соответствие данных
+
+    # Чистим временный файл
+    os.unlink(temp_csv_path)
+
+def test_get_period_operation_logging():
+    # Патчим метод info логгера
+    with patch('src.utils.logger.info') as mock_info:
+        # Вызываем функцию, которая вызывает логгер
+        get_period_operation("","M")
+
+        # Проверяем, что логгер получил определенное сообщение
+        mock_info.assert_called_once_with("Дата не указана, берём текущую")
+
+# Тестируем функцию get_period_operation
+def test_get_period_operation_month():
+    result = get_period_operation("01.01.2025", "M")
+    assert len(result) == 2
+    assert isinstance(result[0], datetime)
+    assert isinstance(result[1], datetime)
+
+
+def test_get_period_operation_month():
+    result = get_period_operation("01.01.2025", "M")
+    assert len(result) == 2
+    assert isinstance(result[0], date)
+    assert isinstance(result[1], date)
+
+
+def test_get_period_operation_all():
+    result = get_period_operation("01.01.2025", "ALL")
+    assert len(result) == 2
+    assert isinstance(result[0], date)
+    assert isinstance(result[1], date)
+
+
+# Тестируем функцию filter_by_date
+def test_filter_by_date():
+    df_input = pd.DataFrame([{"Дата платежа": "01.01.2025"}, {"Дата платежа": "01.02.2025"}])
+    result = filter_by_date(df_input, ["2025-01-01", "2025-01-31"])
+    assert isinstance(result, pd.DataFrame)
+    assert len(result.index) == 1
+
+
+def test_filter_by_date_with_incorrect_date_format():
+    # Создаем тестовый DataFrame с некорректными значениями в столбце дат
+    df_input = pd.DataFrame({
+        "Дата платежа": ["01.33.2025"],
+        "Сумма платежа": [100, ]
+    })
+
+    # Период фильтрации (включаются только корректные даты)
+    period_dates = ["2025-01-01", "2025-01-31"]
+
+    # Проводим фильтрацию
+    result = filter_by_date(df_input, period_dates)
+
+    # Проверяем, что результат — DataFrame
+    assert isinstance(result, pd.DataFrame)
+
+
+# Тестируем функцию get_exchange_rate с заглушкой
+@patch("requests.get")
+def test_get_exchange_rate_success(mock_get):
+    mock_response = mock_get.return_value
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"conversion_rate": 1.2}
+
+    result = get_exchange_rate("USD")
+    assert isinstance(result, float)
+    assert result > 0
+
+
+@patch("requests.get")
+def test_get_exchange_rate_failure(mock_get):
+    mock_response = mock_get.return_value
+    mock_response.status_code = 404
+    mock_response.json.return_value = {}
+
+    result = get_exchange_rate("USD")
+    assert isinstance(result, int)
+    assert result == 0
+
+
+# Тест на ошибку JSON (JSONDecodeError)
+@patch("requests.get")
+def test_get_exchange_rate_json_error(mock_get):
+    mock_response = mock_get.return_value
+    mock_response.status_code = 200
+    mock_response.json.side_effect = json.decoder.JSONDecodeError("Invalid JSON", "", 0)
+
+    result = get_exchange_rate("USD")
+    assert isinstance(result, int)
+    assert result == 0
+
+
+# Тест на одинаковые валюты
+def test_get_exchange_rate_same_currency():
+    result = get_exchange_rate("USD", "USD")
+    assert isinstance(result, int)
+    assert result == 1.0
+
+
+# Тестируем функцию conversion_to_single_currency
+@patch("src.utils.get_exchange_rate")
+def test_conversion_to_single_currency(mock_get_exchange_rate):
+    mock_get_exchange_rate.return_value = 1.2
+
+    df_input = pd.DataFrame([
+        {"Валюта платежа": "USD", "Сумма платежа": 100},
+        {"Валюта платежа": "EUR", "Сумма платежа": 200}
+    ])
+    result = conversion_to_single_currency(df_input)
+    assert isinstance(result, pd.DataFrame)
+    assert "Сумма платежа_RUB" in result.columns
+
+
+@patch("requests.get")
+def test_conversion_to_single_currency_fail_convert(mock_get_exchange_rate):
+    # Готовим тестовый DataFrame с некорректными значениями в денежном столбце
+    df_input = pd.DataFrame({
+        "Валюта платежа": ["USD", "EUR"],
+        "Сумма платежа": ["abc", "xyz"]  # Некорректные значения
+    })
+    mock_get_exchange_rate.return_value = 1.2
+
+    # Пробуем провести конвертацию
+    result = conversion_to_single_currency(df_input)
+
+    # Проверяем, что все значения в результирующем столбце стали NaN
+    assert isinstance(result, pd.DataFrame)
+    assert result["Сумма платежа"].isnull().all(), "Все значения должны стать NaN"
+
+
+def test_conversion_to_single_currency_exception_handling():
+    # Эмуляция ошибочного сценария для одной валюты
+    def mock_get_exchange_rate(currency, target_currency="RUB"):
+        if currency == "ERR_CURRENCY":
+            raise Exception("Искусственная ошибка конверсии валюты!")
+        else:
+            return 1.2  # Обычная ставка для валидной валюты
+
+    # Создаём тестовый DataFrame с разными валютами
+    df_input = pd.DataFrame({
+        "Валюта платежа": ["USD", "ERR_CURRENCY"],
+        "Сумма платежа": [100, 200]
+    })
+
+    # Устанавливаем заглушку на функцию get_exchange_rate
+    with patch("src.utils.get_exchange_rate", side_effect=mock_get_exchange_rate):
+        # Пробуем провести конвертацию
+        result = conversion_to_single_currency(df_input)
+
+    # Проверяем, что результат — DataFrame с правильным количеством строк
+    assert isinstance(result, pd.DataFrame)
+    assert len(result) == 2
+
+    # Проверяем, что первая строка (валидная валюта) сохранилась
+    first_row = result.iloc[0]
+    assert first_row["Валюта платежа"] == "USD"
+    assert first_row["Сумма платежа_RUB"] == 120.0  # Сумма умноженная на коэффициент конверсии
+
+    # Вторая строка (ошибочная валюта) должна оставаться неизменённой
+    second_row = result.iloc[1]
+    assert second_row["Валюта платежа"] == "ERR_CURRENCY"
+
+
+# Тестируем функцию get_data_from_expensess
+def test_get_data_from_expensess():
+    df_input = pd.DataFrame([
+        {"Категория": "Еда", "Сумма платежа_RUB": -100},
+        {"Категория": "Транспорт", "Сумма платежа_RUB": -200}
+    ])
+    result = get_data_from_expensess(df_input)
+    assert isinstance(result, dict)
+    assert "expenses" in result.keys()
+
+
+def test_get_data_from_expensess_failed_conversion():
+    # Готовим тестовый DataFrame с некорректными значениями в колонке сумм
+    df_input = pd.DataFrame({
+        "Категория": ["Еда", "Транспорт"],
+        "Сумма платежа": ["abc", "xyz"],  # Некорректные значения
+        "Сумма платежа_RUB": [None,'8']  # Некорректные значения
+    })
+
+    # Пробуем обработать расходы
+    result = get_data_from_expensess(df_input)
+
+    # Проверяем, что результат содержит структуру с main=[] и total_amount=0
+    assert isinstance(result, dict)
+    assert result == {
+        'expenses': {'main': [], 'total_amount': 0}}, "Функция должна вернуть минимальный результат при наличии NaN!"
+
+
+def test_get_data_from_expensess_grouping():
+    # Генерируем тестовый DataFrame с различными категориями расходов
+    df_input = pd.DataFrame({
+        "Категория": ["Еда", "Транспорт", "Развлечения", "Коммунальные услуги", "Интернет", "Связь", "Путешествия", "Медицина", "Образование"],
+        "Сумма платежа_RUB": [-1000, -500, -800, -1200, -300, -700, -900, -400, -600]
+    })
+
+    # Приводим данные к виду, необходимому для анализа расходов
+    result = get_data_from_expensess(df_input)
+
+    # Проверяем, что итоговый результат содержит ровно восемь категорий
+    # Первые семь уникальных категорий плюс группа "Остальное"
+    assert len(result["expenses"]["main"]) == 8, "Количество категорий должно быть равно восьми!"
+
+    # Проверяем, что последняя категория — это "Остальное"
+    last_category = result["expenses"]["main"][-1]["category"]
+    assert last_category == "Остальное", "Последней категорией должна быть \"Остальное\"!"
+
+    # Проверяем, что сумма группы "Остальное" равна правильному значению
+    # Группа "Остальное" содержит сумму трёх последних расходов
+    expected_sum = abs(-300 - 400)  # Складываем последние три малых расхода
+    assert result["expenses"]["main"][-1]["amount"] == expected_sum, "Сумма группы \"Остальное\" неверна!"
+
+
+# Тестируем функцию get_data_from_income
+def test_get_data_from_income():
+    df_input = pd.DataFrame([
+        {"Категория": "Зарплата", "Сумма платежа_RUB": 1000},
+        {"Категория": "Подработка", "Сумма платежа_RUB": 500}
+    ])
+    result = get_data_from_income(df_input)
+    assert isinstance(result, dict)
+    assert "income" in result.keys()
+
+
+def test_get_data_from_income_incorrect_date_format():
+    # Создаем тестовый DataFrame с некорректными значениями в столбце дат
+    df_input = pd.DataFrame({
+        "Дата платежа": ["01.01.2025"],
+        "Сумма платежа": [100, ],
+        "Категория": ['Продукты' ],
+        "Сумма платежа_RUB": ['', ]
+    })
+
+    # Период фильтрации (включаются только корректные даты)
+    period_dates = ["2025-01-01", "2025-01-31"]
+
+    result = get_data_from_income(df_input)
+    # print("\nresult = ", result)
+
+    # Проверяем, что результат — DataFrame
+    assert result ==  {'income': {'total_amount': 0, 'main': []}}
+
+
+def test_get_list_operation_csv():
+    # Создаем временный CSV-файл с известными данными
+    df_test = pd.DataFrame({
+        "Название": ["Продукт А", "Продукт B"],
+        "Цена": [100, 200],
+        "Статус": ["OK", "OK"]
+    })
+
+    # Создаем временный файл CSV с помощью менеджера контекста
+    with tempfile.NamedTemporaryFile(mode='w+', suffix=".csv", delete=False) as temp_file:
+        df_test.to_csv(temp_file.name, index=False)
+        temp_csv_path = temp_file.name
+
+    # Определяем список необходимых колонок
+    required_columns = ["Название", "Цена", "Статус"]
+
+    # Читаем данные с помощью get_list_operation
+    result_df = get_list_operation(temp_csv_path, required_columns)
+
+    # Проверяем, что получили верный DataFrame
+    assert isinstance(result_df, pd.DataFrame)
+    assert len(result_df) == 2  # Две строки в исходном DataFrame
+    assert result_df.equals(df_test)  # Проверяем точное соответствие данных
+
+    # Чистим временный файл
+    os.unlink(temp_csv_path)
+
+# Тестируем функцию get_user_settings
+def test_get_user_settings_existing_file():
+    settings_path = os.path.join(TEST_DATA_DIR, "settings.json")
+    with open(settings_path, "w") as f:
+        f.write('{"user_currencies": ["USD", "EUR"]}')
+    result = get_user_settings(settings_path)
+    assert isinstance(result, dict)
+    assert "user_currencies" in result.keys()
+
+def test_get_user_settings_nonexistent_file():
+    nonexistent_path = os.path.join(TEST_DATA_DIR, "nonexistent.json")
+    result = get_user_settings(nonexistent_path)
+    assert isinstance(result, dict)
+    assert not result
+
+# Тестируем функцию get_currency_rates
+def test_get_currency_rates():
+    user_settings = {"user_currencies": ["USD", "EUR"]}
+    result = get_currency_rates(user_settings)
+    assert isinstance(result, list)
+    assert len(result) == 2
+
+# Тестируем функцию get_stock_price_sp_500 с заглушкой
+@patch("requests.get")
+def test_get_stock_price_sp_500(mock_get):
+    mock_response = mock_get.return_value
+    mock_response.status_code = 200
+    mock_response.json.return_value = [{
+        "symbol": "AAPL",
+        "price": 100.0
+    }, {
+        "symbol": "GOOG",
+        "price": 200.0
+    }]
+
+    user_settings = {"user_stocks": ["AAPL", "GOOG"]}
+    result = get_stock_price_sp_500(user_settings)
+    assert isinstance(result, list)
+    assert len(result) == 2
+
+# Тестируем функцию write_json
+def test_write_json():
+    output_path = os.path.join(TEST_DATA_DIR, "output.json")
+    data = {"key": "value"}
+    write_json(data, output_path)
+    assert os.path.exists(output_path)
+    with open(output_path, "r") as f:
+        content = f.read()
+        assert '"key": "value"' in content

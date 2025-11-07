@@ -46,6 +46,7 @@ def events_operations(df: DataFrame, str_date: str, range_data: str = "M") -> di
         return "Нет данных в файле"
     elif not isinstance(df, pd.DataFrame):
         logger.error("df должен быть pandas.DataFrame")
+        return "Нет данных"
 
     # # Обработка полученных данных
     # фильтрация данных по периоду
