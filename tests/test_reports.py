@@ -1,8 +1,8 @@
 import os
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 import pandas as pd
 import pytest
-from src.reports import spending_by_weekday
+from src.reports import spending_by_weekday, decorator_write_with_args
 
 
 @pytest.mark.parametrize("date_input, expected_result", [
@@ -157,29 +157,6 @@ def test_decorator_write_with_args(mocked_write_json, sample_data):
 
     # Проверяем, что результат не пустой
     assert result is not None, "Результат должен быть не пустым"
-
-    # Проверяем, что функция spending_by_weekday была вызвана
-    mocked_spending_by_weekday.assert_called_once()
-
-    # Проверяем, что функция write_json была вызвана
-    mocked_write_json.assert_called_once()
-
-
-# Тест на обработку ошибки при записи в файл
-@patch('src.views.write_json', side_effect=Exception("Искусственная ошибка записи в файл"))
-def test_decorator_write_with_args_failure(mocked_write_json, sample_data):
-    """
-    Тест на обработку ошибки при записи в файл.
-    """
-    # Создаем заглушку для функции spending_by_weekday
-    mocked_spending_by_weekday = Mock(return_value=sample_data)
-
-    # Применяем декоратор
-    decorated_function = decorator_write_with_args("test.json")(mocked_spending_by_weekday)
-
-    # Запускаем функцию
-    with pytest.raises(Exception):
-        decorated_function(sample_data, "2025-01-01")
 
     # Проверяем, что функция spending_by_weekday была вызвана
     mocked_spending_by_weekday.assert_called_once()

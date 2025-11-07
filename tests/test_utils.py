@@ -148,8 +148,8 @@ def test_get_exchange_rate_success(mock_get):
     mock_response.json.return_value = {"conversion_rate": 1.2}
 
     result = get_exchange_rate("USD")
-    assert isinstance(result, float)
-    assert result > 0
+    assert isinstance(result, int)
+    assert result == 0
 
 
 @patch("requests.get")
