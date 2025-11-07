@@ -1,7 +1,6 @@
 # Настройки БД
 import os
 
-# from typing import Union
 
 # Пути к файлам
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))

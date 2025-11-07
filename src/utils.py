@@ -18,12 +18,8 @@ from src.config import DATA_DIR, LIST_OPERATION, URL_EXCHANGE, URL_EXCHANGE_SP_5
 logger = app_logger.get_logger("utils.log")
 
 
-# Загрузка переменных из .env-файла,3
+# Загрузка переменных из .env-файла
 load_dotenv()
-# headers = {"apikey": os.getenv("API_KEY")}
-# headers_sp_500 = {
-#     "apikey": os.getenv("API_KEY_SP_500"),
-# }
 
 
 def get_list_operation(
@@ -398,7 +394,10 @@ def get_data_from_income(df: pd.DataFrame) -> Dict:
 
 
 def get_user_settings(file_path: str) -> Dict:
-    """"""
+    """ функция берет из файла с настройками пользователей данные и преобразует их в словарь
+    :param file_path: путь к файлу с настройками данных пользователя
+    :return: словарь с настройками
+    """
     # считываем из file_path данные получаем словарь с данными data
     # Считываем существующие данные (если файл есть)
     data: dict[Any, Any] = {}
