@@ -1,3 +1,4 @@
+import openpyxl
 import json
 import os
 import re
@@ -56,7 +57,7 @@ def get_list_operation(
         if extension == ".CSV":
             result_df = pd.read_csv(path_filename, delimiter=",")
         else:
-            result_df = pd.read_excel(path_filename)
+            result_df = pd.read_excel(path_filename, engine='openpyxl')
 
         logger.info(f"Чтение данных из файла {os.path.basename(path_filename)} ")
 
@@ -64,7 +65,7 @@ def get_list_operation(
         index_column = list_operation
         if len(result_df.columns) != len(index_column):
             logger.error(f"Ошибка в данных, отсутствует колонка {set(index_column) - set(result_df.columns)}")
-            return result_df
+            return pd.DataFrame()
 
         # Если файл только с заголовками, а данных нет
         if len(result_df) == 0:

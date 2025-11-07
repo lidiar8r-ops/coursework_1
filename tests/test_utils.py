@@ -58,6 +58,58 @@ def test_get_list_operation_wrong_format():
     assert result.empty
 
 
+# Тест на обработку ошибки при отсутствии колонок
+@patch('src.utils.logger')
+def test_get_list_operation_missing_columns(mocked_logger, faulty_data):
+    """
+    Тест на обработку ошибки при отсутствии колонок.
+    """
+    # Создаем временный файл с отсутствующими колонками
+    with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.xlsx') as temp_file:
+        temp_file_path = temp_file.name
+        faulty_data.drop(columns=["Категория"]).to_excel(temp_file_path, index=False, engine='openpyxl')
+
+    # Запускаем функцию
+    result = get_list_operation(temp_file_path, ["Дата платежа", "Сумма платежа", "Кэшбэк"], "OK")
+    print("\n!!! = ", result)
+
+    # Удаляем временный файл
+    os.remove(temp_file_path)
+
+    # Проверяем, что результат пустой
+    assert result.empty, "Результат должен быть пустым"
+
+    # Проверяем, что было сообщение об ошибке
+    mocked_logger.error.assert_called_once_with("Ошибка в данных, отсутствует колонка {'Сумма платежа'}")
+
+
+# Тест на обработку ValueError
+@patch('src.utils.logger')
+def test_get_list_operation_no_data(mocked_logger):
+    """
+    Тест на обработку ошибки при отсутствии данных.
+    """
+    # Создаем временный файл с колонками, но без данных
+    with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.xlsx') as temp_file:
+        temp_file.write("Дата платежа,Сумма платежа,Категория\n")
+        temp_file.write("Дата платежа,Сумма платежа,Категория\n")
+        temp_file_path = temp_file.name
+
+    # Запускаем функцию
+    result = get_list_operation(temp_file_path, ["Дата платежа", "Сумма платежа", "Категория"], "OK")
+
+    # Удаляем временный файл
+    os.remove(temp_file_path)
+
+    # Проверяем, что результат пустой
+    assert result.empty, "Результат должен быть пустым"
+
+    # Проверяем, что было сообщение об ошибке
+
+    mocked_logger.error.assert_called()
+
+
+
 def test_get_list_operation_csv():
     # Создаем временный CSV-файл с известными данными
     df_test = pd.DataFrame({
@@ -84,6 +136,7 @@ def test_get_list_operation_csv():
     # Чистим временный файл
     os.unlink(temp_csv_path)
 
+
 def test_get_period_operation_logging():
     # Патчим метод info логгера
     with patch('src.utils.logger.info') as mock_info:
@@ -97,12 +150,21 @@ def test_get_period_operation_logging():
 def test_get_period_operation_month():
     result = get_period_operation("01.01.2025", "M")
     assert len(result) == 2
-    assert isinstance(result[0], datetime)
-    assert isinstance(result[1], datetime)
+    assert isinstance(result[0], date)
+    assert isinstance(result[1], date)
 
 
-def test_get_period_operation_month():
-    result = get_period_operation("01.01.2025", "M")
+# Тестируем функцию get_period_operation
+def test_get_period_operation_year():
+    result = get_period_operation("01.01.2025", "Y")
+    assert len(result) == 2
+    assert isinstance(result[0], date)
+    assert isinstance(result[1], date)
+
+
+# Тестируем функцию get_period_operation
+def test_get_period_operation_week():
+    result = get_period_operation("01.01.2025", "W")
     assert len(result) == 2
     assert isinstance(result[0], date)
     assert isinstance(result[1], date)
