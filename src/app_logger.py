@@ -14,11 +14,7 @@ def get_file_handler(name: str) -> logging.FileHandler:
     :param name: имя файла лога (без пути)
     :return: экземпляр FileHandler
     """
-    file_handler = logging.FileHandler(
-        os.path.join(LOG_DIR, name),
-        mode="w",
-        encoding="utf-8"
-    )
+    file_handler = logging.FileHandler(os.path.join(LOG_DIR, name), mode="w", encoding="utf-8")
     file_handler.setLevel(logging.INFO)
     file_handler.setFormatter(logging.Formatter(s_log_format))
     return file_handler

@@ -1,4 +1,3 @@
-import openpyxl
 import json
 import os
 import re
@@ -57,7 +56,7 @@ def get_list_operation(
         if extension == ".CSV":
             result_df = pd.read_csv(path_filename, delimiter=",")
         else:
-            result_df = pd.read_excel(path_filename, engine='openpyxl')
+            result_df = pd.read_excel(path_filename, engine="openpyxl")
 
         logger.info(f"Чтение данных из файла {os.path.basename(path_filename)} ")
 
@@ -110,7 +109,7 @@ def get_period_operation(str_date: str, range_data: str = "M") -> list:
     except ValueError as e:
         logger.error(f"Некорректный формат даты: {str_date}. Ошибка: {e}")
         str_date = datetime.now().strftime("%d.%m.%Y")
-        return [str_date , str_date]
+        return [str_date, str_date]
 
     # Нормализация range_data
     range_data = (range_data or "M").upper()
@@ -154,7 +153,8 @@ def filter_by_date(df: pd.DataFrame, list_period: List) -> DataFrame:
 
     # Преобразование столбца "Дата платежа" в datetime
     try:
-        df.loc[:, "Дата платежа"] = pd.to_datetime(df.loc[:, "Дата платежа"], format="%d.%m.%Y", errors="coerce"  # некорректные значения → NaT
+        df.loc[:, "Дата платежа"] = pd.to_datetime(
+            df.loc[:, "Дата платежа"], format="%d.%m.%Y", errors="coerce"  # некорректные значения → NaT
         )
     except Exception as e:
         logger.error(f"Ошибка при преобразовании столбца 'Дата платежа': {e}")
@@ -182,7 +182,7 @@ def get_exchange_rate(carrency_code: str, target_currency: str = "RUB") -> float
         if carrency_code == target_currency:
             return 1
         else:
-            response = requests.get(f"{URL_EXCHANGE}{os.getenv(API_KEY)}/pair/{carrency_code}/{target_currency}")
+            response = requests.get(f"{URL_EXCHANGE}{os.getenv('API_KEY')}/pair/{carrency_code}/{target_currency}")
             # response.raise_for_status()
             # data = response.json()
             # return {
@@ -239,7 +239,7 @@ def conversion_to_single_currency(df: pd.DataFrame, target_currency: str = "RUB"
     # df = df.assign(**{new_amount_col: df[amount_col]})
 
     # Получаем уникальные валюты в данных
-    unique_currencies = df[currency_col].dropna().unique()
+    unique_currencies = df["Валюта платежа"].dropna().unique()
 
     for currency in unique_currencies:
         if currency == target_currency:
@@ -273,6 +273,7 @@ def get_data_from_expensess(df: pd.DataFrame) -> Dict:
     """
     # Название колонки с суммой в RUB
     new_amount_col = f"{LIST_OPERATION[3]}_RUB"
+    category_col = LIST_OPERATION[4]
 
     # Проверка наличия колонки
     if new_amount_col not in df.columns:
@@ -294,11 +295,11 @@ def get_data_from_expensess(df: pd.DataFrame) -> Dict:
     sum_amount = expenses.sum()
 
     # вычисляем Сумму трат по каждой категориям, т.е. получаем уникальные категории
-    unique_categories = df[df[new_amount_col] < 0][LIST_OPERATION[4]].dropna().unique()
+    unique_categories = df[df[new_amount_col] < 0]["Категория"].dropna().unique()
 
     result_list = []
     for category in unique_categories:
-        df_category = df.loc[(df[new_amount_col] < 0) & (df[LIST_OPERATION[4]] == category), new_amount_col]
+        df_category = df.loc[(df[new_amount_col] < 0) & (df[category_col] == category), new_amount_col]
         sum_amount_category = df_category.sum()
         result_list.append(
             {
@@ -347,6 +348,7 @@ def get_data_from_income(df: pd.DataFrame) -> Dict:
     """
     # Название колонки с суммой в RUB
     new_amount_col = f"{LIST_OPERATION[3]}_RUB"
+    category_col = LIST_OPERATION[4]
 
     # Проверка наличия колонки
     if new_amount_col not in df.columns:
@@ -368,11 +370,11 @@ def get_data_from_income(df: pd.DataFrame) -> Dict:
     sum_amount = income.sum()
 
     # вычисляем Сумму трат по каждой категориям, т.е. получаем уникальные категории
-    unique_categories = df[df[new_amount_col] > 0][LIST_OPERATION[4]].dropna().unique()
+    unique_categories = df[df[new_amount_col] > 0]["Категория"].dropna().unique()
 
     result_list = []
     for category in unique_categories:
-        df_category = df.loc[(df[new_amount_col] > 0) & (df[LIST_OPERATION[4]] == category), new_amount_col]
+        df_category = df.loc[(df[new_amount_col] > 0) & (df[category_col] == category), new_amount_col]
         sum_amount_category = df_category.sum()
         result_list.append(
             {
@@ -399,7 +401,10 @@ def get_user_settings(file_path: str) -> Dict:
     """"""
     # считываем из file_path данные получаем словарь с данными data
     # Считываем существующие данные (если файл есть)
+    data: dict[Any, Any] = {}
+
     if os.path.exists(file_path):
+
         try:
             with open(file_path, "r") as f:
                 data = json.load(f)
@@ -451,7 +456,7 @@ def get_stock_price_sp_500(dict_user: dict) -> List[Dict]:
         - "user_stocks": список тикеров акций (например, ["AAPL", "MSFT"])
     :return: список словарей с полями 'stock' и 'price'
     """
-    stock_data: list[dict[str, Any]] = [] # Результат: данные по акциям
+    stock_data: list[dict[str, Any]] = []  # Результат: данные по акциям
 
     # Проверка API-ключа
     api_key = os.getenv("API_KEY_SP_500")
@@ -513,7 +518,7 @@ def get_stock_price_sp_500(dict_user: dict) -> List[Dict]:
     return stock_data
 
 
-def write_json(dict_wr:  Union[Dict[str, Any], List[Dict[Any, Any]]], name_file: str = "answer.json") -> None:
+def write_json(dict_wr: Union[Dict[str, Any], List[Dict[Any, Any]]], name_file: str = "answer.json") -> None:
     """
     Выводит в JSON‑файл все полученные данные по разделам.
 

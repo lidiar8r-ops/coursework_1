@@ -5,9 +5,17 @@ from pandas import DataFrame
 
 from src import app_logger
 from src.config import DATA_DIR
-from src.utils import (conversion_to_single_currency, filter_by_date, get_currency_rates, get_data_from_expensess,
-                       get_data_from_income, get_period_operation, get_stock_price_sp_500, get_user_settings,
-                       write_json)
+from src.utils import (
+    conversion_to_single_currency,
+    filter_by_date,
+    get_currency_rates,
+    get_data_from_expensess,
+    get_data_from_income,
+    get_period_operation,
+    get_stock_price_sp_500,
+    get_user_settings,
+    write_json,
+)
 
 logger = app_logger.get_logger("views.log")
 

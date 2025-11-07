@@ -1,13 +1,11 @@
-import shutil
-import os
 import logging
+import os
 from unittest.mock import patch
-import pytest
 
-from src.app_logger import *
+from src.app_logger import get_file_handler, get_logger, get_stream_handler, s_log_format
 from src.config import PARENT_DIR
 
-path_file = os.path.join(PARENT_DIR, 'tmp')
+path_file = os.path.join(PARENT_DIR, "tmp")
 try:
     os.mkdir(path_file)
     print(f"Директория '{path_file}' создана успешно.")
@@ -46,7 +44,7 @@ def test_get_logger():
 
 def test_logging_message(tmpdir):
     log_path = os.path.join(path_file, "test.log")
-    logger = get_logger(os.path.join(path_file,log_path))
+    logger = get_logger(os.path.join(path_file, log_path))
     logger.info("Test message")
 
     # Проверяем, что сообщение было записано в файл
@@ -56,7 +54,7 @@ def test_logging_message(tmpdir):
 
 
 def test_log_levels():
-    logger = get_logger(os.path.join(path_file,"level_test"))
+    logger = get_logger(os.path.join(path_file, "level_test"))
     with patch.object(logger, "info") as mock_info, patch.object(logger, "warning") as mock_warning:
         logger.info("Info level message")
         logger.warning("Warning level message")
@@ -65,7 +63,7 @@ def test_log_levels():
 
 
 def test_error_level_logged_to_console(caplog):
-    logger = get_logger(os.path.join(path_file,"console_test"))
+    logger = get_logger(os.path.join(path_file, "console_test"))
     logger.error("This should go to console")
     captured = caplog.text
     assert "This should go to console" in captured
@@ -79,4 +77,3 @@ def test_file_handler_creation():
         assert os.path.exists(log_file)
     finally:
         handler.close()
-

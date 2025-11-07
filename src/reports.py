@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta
-from typing import Optional
+from functools import wraps
+from typing import Any, Callable, Optional
+
 import pandas as pd
 
 from src import app_logger
@@ -9,10 +11,19 @@ from src.utils import conversion_to_single_currency, filter_by_date, write_json
 # Настройка логирования
 logger = app_logger.get_logger("reports.log")
 
-def decorator_write_with_args(file_name = "reports.json"):
-    def my_decorator(func):
-        def wrapper(*args, **kwargs):
-            result = func(*args, **kwargs)
+
+def decorator_write_with_args(file_name: str = "reports.json") -> Callable:
+    """
+    Декоратор для функций-отчетов, который записывает в файл результат, который возвращает функция, формирующая отчет.
+    :param file_name: Декоратор без параметра — записывает данные отчета в файл с названием по умолчанию.
+                     Декоратор с параметром — принимает имя файла в качестве параметра.
+    :return: Записывает результат функции в файл file_name.
+    """
+
+    def my_decorator(func: Callable) -> Callable:
+        @wraps(func)
+        def wrapper(*args: Any, **kwargs: Any) -> pd.DataFrame:
+            result: pd.DataFrame = func(*args, **kwargs)
 
             # Преобразование в словарь (исправленный orient)
             result_dict = result.to_dict(orient="records")
@@ -22,15 +33,14 @@ def decorator_write_with_args(file_name = "reports.json"):
             logger.info(f"Запись результатов в {file_name}")
 
             return result
+
         return wrapper
+
     return my_decorator
 
 
 @decorator_write_with_args()
-def spending_by_weekday(
-    transactions: pd.DataFrame,
-    date: Optional[str] = None
-) -> pd.DataFrame:
+def spending_by_weekday(transactions: pd.DataFrame, date: Optional[str] = None) -> pd.DataFrame:
     """
     Возвращает средние траты в каждый из дней недели за последние три месяца (от переданной даты).
 
@@ -90,14 +100,7 @@ def spending_by_weekday(
         result_df["день_недели"] = result_df["Дата платежа"].dt.weekday
 
         # Группировка и расчёт среднего (гарантируем DataFrame)
-        avg_spending = (
-            result_df
-            .groupby("день_недели", as_index=False)
-            [new_amount_col]
-            .mean()
-            .round(2)
-            .abs()
-        )
+        avg_spending = result_df.groupby("день_недели", as_index=False)[new_amount_col].mean().round(2).abs()
 
         # Переименование колонки (без inplace)
         # avg_spending = avg_spending.rename(columns={new_amount_col: "средние_траты"})

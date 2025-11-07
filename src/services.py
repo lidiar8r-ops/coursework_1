@@ -25,6 +25,7 @@ def get_profitable_cashback(data: DataFrame, str_year: str, str_month: str) -> D
     :return: словарь {категория: сумма кэшбэка}, отсортированный по убыванию.
              Пустой dict, если данных нет.
     """
+    dict_result: Dict[str, float] = {}
     try:
         logger.info(f"Начало анализа кэшбэка за {str_year}-{str_month}. " f"Всего транзакций: {len(data)}")
 
