@@ -76,9 +76,9 @@ def events_operations(df: DataFrame, str_date: str, range_data: str = "M") -> di
         list_receipt = get_currency_rates(dict_settings)
         result_dict["currency_rates"] = list_receipt
 
-        # раздел «Стоимость акций из S&P 500>>
-        list_receipt = get_stock_price_sp_500(dict_settings)
-        result_dict["stock_prices"] = list_receipt
+        # # раздел «Стоимость акций из S&P 500>>
+        # list_receipt = get_stock_price_sp_500(dict_settings)
+        # result_dict["stock_prices"] = list_receipt
 
     # получаем через api данные акций (указанных в list_settings) на дату текущую
 
