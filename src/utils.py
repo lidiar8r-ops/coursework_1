@@ -18,12 +18,8 @@ from src.config import DATA_DIR, LIST_OPERATION, URL_EXCHANGE, URL_EXCHANGE_SP_5
 logger = app_logger.get_logger("utils.log")
 
 
-# Загрузка переменных из .env-файла,3
+# Загрузка переменных из .env-файла
 load_dotenv()
-# headers = {"apikey": os.getenv("API_KEY")}
-# headers_sp_500 = {
-#     "apikey": os.getenv("API_KEY_SP_500"),
-# }
 
 
 def get_list_operation(
