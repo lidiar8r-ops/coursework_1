@@ -1,7 +1,6 @@
 # Настройки БД
 import os
 
-
 # Пути к файлам
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 PARENT_DIR = os.path.abspath(os.path.join(CURRENT_DIR, ".."))
