@@ -12,7 +12,7 @@
 ## Установка:
 
 1 Клонируйте репозиторий:
-``` git clone git@github.com:lidiar8r-ops/homework.git  ```
+``` git clone git@github.com:lidiar8r-ops/coursework_1.git ```
 
 2 Перейдите в папку проекта:
 ``` cd ваш_репозиторий```
@@ -480,3 +480,4 @@ def spending_by_weekday(transactions: pd.DataFrame, date: Optional[str] = None) 
 
 ## Автор
 [@lidiar8r-ops](https://github.com/lidiar8r-ops)
+
